@@ -28,6 +28,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Build and RUN the image before publishing it. The unit tests all pass
+      # against the source tree, so they cannot see a file the Dockerfile
+      # forgot to COPY — which shipped once as a crash-looping container that
+      # took the site down until the next image.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: secret-wars:candidate
+
+      - name: The image must actually serve
+        run: |
+          docker run -d --name candidate -p 8087:8080 secret-wars:candidate
+          ok=0
+          for _ in $(seq 1 20); do
+            if curl -sf --max-time 2 localhost:8087/healthz > /tmp/health; then ok=1; break; fi
+            sleep 1
+          done
+          docker logs candidate
+          if [ "$ok" != 1 ]; then echo "::error::the built image did not become healthy"; exit 1; fi
+          cat /tmp/health
+          # A seeded list is the difference between "running" and "working".
+          grep -q '"sections":1[0-9]' /tmp/health \
+            || { echo "::error::image started but served no reading list"; exit 1; }
+          curl -sf localhost:8087/ | grep -q "Road to" \
+            || { echo "::error::the page did not render"; exit 1; }
+          docker rm -f candidate
+
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
