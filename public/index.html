@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="only dark">
+<meta name="theme-color" content="#0D0D0F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Secret Wars">
+<title>Road to Secret Wars — Reading Checklist</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:only dark;
+    --paper:#0D0D0F;
+    --card:#17171B;
+    --ink:#F2F1EB;
+    --ink-soft:#A9A9B2;
+    --hair:#34343C;
+    --red:#F03A41;
+    --blue:#7C93E8;
+    --display:'Big Shoulders Display','Haettenschweiler','Arial Narrow',Impact,sans-serif;
+    --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#0D0D0F}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:86px;
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:0 18px}
+
+  /* ---------- masthead ---------- */
+  header.mast{padding:34px 0 22px;border-bottom:3px solid var(--ink)}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-soft);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  .eyebrow b{color:var(--red);font-weight:600}
+  h1{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(52px,15vw,116px);line-height:.84;letter-spacing:-.015em;
+    text-transform:uppercase;margin:14px 0 0;
+  }
+  h1 .thin{display:block;font-weight:500;color:var(--red)}
+  .deck{
+    margin:14px 0 0;max-width:46ch;font-size:15px;color:var(--ink-soft);
+  }
+
+  /* ---------- incursion meter (signature) ---------- */
+  .meter{
+    margin:26px 0 0;padding:20px;background:var(--card);
+    border:1px solid var(--hair);
+    display:grid;grid-template-columns:130px 1fr;gap:20px;align-items:center;
+  }
+  @media(max-width:520px){.meter{grid-template-columns:1fr;gap:14px}}
+  .diagram{width:130px;height:96px;display:block}
+  .diagram circle{mix-blend-mode:screen;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+  .readout .big{
+    font-family:var(--display);font-weight:800;font-size:60px;line-height:.85;letter-spacing:-.01em;
+  }
+  .readout .big span{color:var(--ink-soft);font-size:26px;letter-spacing:0}
+  .readout .lbl{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-soft);margin-top:8px;
+  }
+  .bar{height:6px;background:#2B2B33;margin-top:12px;position:relative;overflow:hidden}
+  .bar i{position:absolute;inset:0 auto 0 0;width:0%;background:var(--red);transition:width .4s ease}
+
+  /* ---------- sections ---------- */
+  section.blk{margin:38px 0 0;scroll-margin-top:12px}
+  .blk-head{
+    display:flex;align-items:baseline;gap:14px;
+    border-bottom:2px solid var(--ink);padding-bottom:8px;
+  }
+  .num{
+    font-family:var(--mono);font-weight:600;font-size:13px;color:var(--red);letter-spacing:.08em;
+  }
+  .blk-head h2{
+    font-family:var(--display);font-weight:700;text-transform:uppercase;
+    font-size:clamp(26px,6vw,40px);line-height:1;letter-spacing:-.01em;margin:0;flex:1;
+  }
+  .tally{font-family:var(--mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
+  .blk-note{
+    font-size:14px;color:var(--ink-soft);margin:10px 0 2px;max-width:60ch;
+  }
+  .blk-note.flag{
+    border-left:3px solid var(--red);padding-left:10px;
+  }
+
+  ul.list{list-style:none;margin:12px 0 0;padding:0}
+  li.row{border-bottom:1px solid var(--hair)}
+  li.row label{
+    display:flex;align-items:center;gap:14px;padding:11px 6px;cursor:pointer;
+  }
+  li.row input{position:absolute;opacity:0;width:0;height:0}
+  .box{
+    flex:0 0 auto;width:20px;height:20px;border:1.5px solid var(--ink);
+    background:transparent;position:relative;transition:background .12s ease;
+  }
+  .box::after{
+    content:"";position:absolute;inset:3px;background:var(--red);
+    transform:scale(0);transition:transform .14s cubic-bezier(.2,.8,.2,1);
+  }
+  input:checked + .box::after{transform:scale(1)}
+  input:focus-visible + .box{outline:3px solid var(--blue);outline-offset:2px}
+  .title{flex:1;font-weight:500}
+  .issue{
+    font-family:var(--mono);font-weight:600;font-size:14px;white-space:nowrap;
+  }
+  .note{
+    display:block;font-size:12.5px;color:var(--ink-soft);font-weight:400;margin-top:1px;
+  }
+  input:checked ~ .title,input:checked ~ .issue{color:var(--ink-soft)}
+  input:checked ~ .title{text-decoration:line-through;text-decoration-thickness:1px}
+
+  /* alternating title tint inside Time Runs Out */
+  li.row.alt .title{color:var(--blue)}
+  li.row.alt input:checked ~ .title{color:var(--ink-soft)}
+
+  /* ---------- footer bar ---------- */
+  .dock{
+    position:fixed;left:0;right:0;bottom:0;background:#17171B;color:var(--ink);
+    border-top:3px solid var(--red);z-index:5;
+    box-shadow:0 -14px 26px rgba(0,0,0,.55);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .dock .wrap{display:flex;align-items:center;gap:16px;padding-top:12px;padding-bottom:12px}
+  .dock .stat{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;flex:1}
+  .dock .stat b{color:#fff;font-size:15px}
+  button{
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    background:transparent;color:var(--ink);border:1px solid #55555C;padding:8px 12px;cursor:pointer;
+  }
+  button:hover{border-color:var(--red);color:#fff}
+  button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+  .savestate{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#9A9AA4}
+  .savestate.warn{color:var(--red)}
+
+  footer.colophon{
+    margin:44px 0 10px;padding-top:16px;border-top:1px solid var(--hair);
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-soft);
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body style="background:#0D0D0F;color:#F2F1EB">
+
+<div class="wrap">
+  <header class="mast">
+    <div class="eyebrow">
+      <span>Hickman&rsquo;s Avengers &rarr; Secret Wars &rarr; everything after</span>
+      <span><b>Sections 000&ndash;010</b></span>
+    </div>
+    <h1>Road to<span class="thin" style="color:#F03A41">Secret Wars</span></h1>
+    <p class="deck">The full run in reading order, issue by issue. Tick as you go &mdash; your progress syncs across every device. No plot notes, nothing spoiled.</p>
+
+    <div class="meter" style="background:#17171B;color:#F2F1EB">
+      <svg class="diagram" viewBox="0 0 130 96" aria-hidden="true">
+        <circle id="c616" cx="42" cy="48" r="30" fill="#C42328" opacity=".95"/>
+        <circle id="c1610" cx="88" cy="48" r="30" fill="#2E4FA8" opacity=".95"/>
+      </svg>
+      <div class="readout">
+        <div class="big" id="count">0<span> / 0</span></div>
+        <div class="lbl" id="pctLabel">0% convergence &middot; main line</div>
+        <div class="bar"><i id="barFill"></i></div>
+      </div>
+    </div>
+  </header>
+
+  <main id="sections"></main>
+
+  <footer class="colophon">
+    <span>Order as supplied &mdash; unaltered</span>
+    <span>Checklist &middot; 616 &times; 1610</span>
+  </footer>
+</div>
+
+<div class="dock" style="background:#17171B;color:#F2F1EB">
+  <div class="wrap">
+    <div class="stat">Main line <b id="dockMain">0/0</b> &nbsp;&middot;&nbsp; Optional <b id="dockOpt">0/0</b></div>
+    <span class="savestate" id="saveState">Loading</span>
+    <button id="resetBtn" type="button">Reset all</button>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  {
+    n:"000", title:"Before the Beginning", core:false,
+    note:"Secret Wars resolves this run as much as it resolves the Avengers one &mdash; same author, same era, and threads that walk straight into the finale. Around 65 issues, and widely held to be his best Marvel work.",
+    items:[
+      {s:"Dark Reign: Fantastic Four",i:"#1&ndash;5",note:"Hickman's warm-up, written before his run proper"},
+      {s:"Fantastic Four",i:"(1998) #570&ndash;588",note:"The run starts here"},
+      {s:"FF",i:"#1&ndash;11",note:"Same story, retitled"},
+      {s:"Fantastic Four #600&ndash;611 / FF #12&ndash;23",i:"alternating",note:"F4 600, FF 12, F4 601, FF 13, F4 602, FF 14, F4 603, FF 15, F4 604, FF 16, F4 605, 605.1, 606, FF 17&ndash;18, F4 607&ndash;608, FF 19&ndash;21, F4 609&ndash;610, FF 22, F4 611, FF 23"}
+    ]
+  },
+  {
+    n:"001", title:"Incursions &amp; Avengers World", core:true,
+    note:"Two titles running in parallel: Avengers goes big and outward, New Avengers stays with the Illuminati.",
+    items:[
+      {s:"New Avengers",i:"#1"},{s:"New Avengers",i:"#2"},{s:"New Avengers",i:"#3"},
+      {s:"Avengers",i:"#1"},{s:"Avengers",i:"#2"},{s:"Avengers",i:"#3"},{s:"Avengers",i:"#4"},{s:"Avengers",i:"#5"},
+      {s:"New Avengers",i:"#4"},{s:"New Avengers",i:"#5"},{s:"New Avengers",i:"#6"},
+      {s:"Avengers",i:"#6"},{s:"Avengers",i:"#7"},{s:"Avengers",i:"#8"},{s:"Avengers",i:"#9"},
+      {s:"Avengers",i:"#10"},{s:"Avengers",i:"#11"},{s:"Avengers",i:"#12"},{s:"Avengers",i:"#13"},
+      {s:"New Avengers",i:"#7"},
+      {s:"Avengers",i:"#14"},{s:"Avengers",i:"#15"},{s:"Avengers",i:"#16"},{s:"Avengers",i:"#17",note:"Leads straight into Infinity"}
+    ]
+  },
+  {
+    n:"002", title:"Infinity", core:true,
+    note:"The six-issue event miniseries interleaves with both ongoings. This is the published reading order.",
+    items:[
+      {s:"Free Comic Book Day 2013",i:"Infinity #1",note:"Hickman prologue"},
+      {s:"Infinity",i:"#1"},
+      {s:"New Avengers",i:"#8"},{s:"New Avengers",i:"#9"},
+      {s:"Avengers",i:"#18"},
+      {s:"Infinity",i:"#2"},
+      {s:"New Avengers",i:"#10"},
+      {s:"Avengers",i:"#19"},
+      {s:"Infinity",i:"#3"},
+      {s:"Avengers",i:"#20"},
+      {s:"Infinity",i:"#4"},
+      {s:"Avengers",i:"#21"},
+      {s:"New Avengers",i:"#11"},
+      {s:"Infinity",i:"#5"},
+      {s:"Avengers",i:"#22"},{s:"Avengers",i:"#23"},
+      {s:"Infinity",i:"#6"},
+      {s:"New Avengers",i:"#12"},
+      {s:"Infinity: Against the Tide",i:"Infinite Comic #1&ndash;2",note:"Digital-first Silver Surfer side-story, set during the event"}
+    ]
+  },
+  {
+    n:"003", title:"Post-Infinity &amp; Original Sin", core:true,
+    note:"New Avengers #13 ships as #13.INH. Avengers #34.1 and #34.2 are numbered point-one issues, not misprints.",
+    items:[
+      {s:"Avengers",i:"#24"},
+      {s:"New Avengers",i:"#13",note:"Shipped as #13.INH"},{s:"New Avengers",i:"#14"},{s:"New Avengers",i:"#15"},
+      {s:"Avengers",i:"#25"},{s:"Avengers",i:"#26"},{s:"Avengers",i:"#27"},{s:"Avengers",i:"#28"},
+      {s:"New Avengers",i:"#16"},{s:"New Avengers",i:"#17"},{s:"New Avengers",i:"#18"},{s:"New Avengers",i:"#19"},
+      {s:"New Avengers",i:"#20"},{s:"New Avengers",i:"#21"},{s:"New Avengers",i:"#22"},{s:"New Avengers",i:"#23"},
+      {s:"New Avengers Annual",i:"#1",note:"Barbiere &amp; Rudy, not Hickman &mdash; fills in Doctor Strange before Time Runs Out"},
+      {s:"Original Sin",i:"#0",note:"Waid prologue"},
+      {s:"Original Sin",i:"#1"},{s:"Original Sin",i:"#2"},{s:"Original Sin",i:"#3"},{s:"Original Sin",i:"#4"},
+      {s:"Original Sin",i:"#5"},{s:"Original Sin",i:"#6"},{s:"Original Sin",i:"#7"},{s:"Original Sin",i:"#8"},
+      {s:"Avengers",i:"#29"},{s:"Avengers",i:"#30"},{s:"Avengers",i:"#31"},{s:"Avengers",i:"#32"},
+      {s:"Avengers",i:"#33"},{s:"Avengers",i:"#34"},{s:"Avengers",i:"#34.1"},{s:"Avengers",i:"#34.2"}
+    ]
+  },
+  {
+    n:"004", title:"Optional Reading", core:false,
+    note:"Side reading, not required by the main line. Issue numbers filled in so you can find them.",
+    items:[
+      {s:"Captain America (2012)",i:"#16&ndash;21",note:"Remender &mdash; The Iron Nail. Starts at #1 if you want the whole run."},
+      {s:"Thor: God of Thunder",i:"#1&ndash;25",note:"Aaron. Stops where the title becomes Thor (2014) &mdash; all you need is that Jane Foster is Thor."},
+      {s:"X-Men: Schism",i:"#1&ndash;5",note:"Cyclops vs. Wolverine."},
+      {s:"Avengers: X-Sanction",i:"#1&ndash;4"},
+      {s:"Avengers vs. X-Men",i:"#0&ndash;12"},
+      {s:"Superior Iron Man",i:"#1&ndash;9",note:"Tom Taylor. Spins out of AXIS, which is poorly regarded and skippable &mdash; all you need is that Tony came out of it inverted"},
+      {s:"Infinity Companion",i:"12 series",note:"The event's tie-ins: Captain Marvel #15&ndash;16, Thunderbolts #14&ndash;18, Avengers Assemble #18&ndash;20, Infinity: The Hunt #1&ndash;4, Mighty Avengers #1&ndash;3, Nova #8&ndash;9, Superior Spider-Man Team-Up #3&ndash;4, Infinity: Heist #1&ndash;4, Fearless Defenders #10, Secret Avengers #10&ndash;11, Guardians of the Galaxy #8&ndash;9, Wolverine &amp; the X-Men Annual #1"},
+      {s:"Ultimate Comics: Doomsday",i:"12 issues",note:"Ultimate Enemy #1&ndash;4, Ultimate Mystery #1&ndash;4, Ultimate Doom #1&ndash;4."},
+      {s:"Ultimate Comics: The Ultimates",i:"#1&ndash;12",note:"Hickman's Ultimate Universe run."}
+    ]
+  },
+  {
+    n:"005", title:"Time Runs Out", core:true,
+    note:"Strict alternation, Avengers then New Avengers, with one wobble near the end: New Avengers #31 and #32 run back to back, and Avengers #44 closes it out.",
+    items:[
+      {s:"Avengers",i:"#35"},{s:"New Avengers",i:"#24",alt:true},
+      {s:"Avengers",i:"#36"},{s:"New Avengers",i:"#25",alt:true},
+      {s:"Avengers",i:"#37"},{s:"New Avengers",i:"#26",alt:true},
+      {s:"Avengers",i:"#38"},{s:"New Avengers",i:"#27",alt:true},
+      {s:"Avengers",i:"#39"},{s:"New Avengers",i:"#28",alt:true},
+      {s:"Avengers",i:"#40"},{s:"New Avengers",i:"#29",alt:true},
+      {s:"Avengers",i:"#41"},{s:"New Avengers",i:"#30",alt:true},
+      {s:"Avengers",i:"#42"},{s:"New Avengers",i:"#31",alt:true},{s:"New Avengers",i:"#32",alt:true},
+      {s:"Avengers",i:"#43"},{s:"New Avengers",i:"#33",alt:true},
+      {s:"Avengers",i:"#44"}
+    ]
+  },
+  {
+    n:"006", title:"Secret Wars", core:true, flag:true,
+    note:"Not on your list &mdash; added because it's where the road ends. Skip the section if you only wanted the run-up.",
+    items:[
+      {s:"Secret Wars",i:"#0",note:"Free Comic Book Day 2015 prologue"},
+      {s:"Secret Wars",i:"#1"},{s:"Secret Wars",i:"#2"},{s:"Secret Wars",i:"#3"},{s:"Secret Wars",i:"#4"},
+      {s:"Secret Wars",i:"#5"},{s:"Secret Wars",i:"#6"},{s:"Secret Wars",i:"#7"},{s:"Secret Wars",i:"#8"},
+      {s:"Secret Wars",i:"#9"}
+    ]
+  },
+  {
+    n:"007", title:"Secret Wars: The Tie-Ins", core:false,
+    note:"The tie-ins worth the time, in recommended order &mdash; the weakest and least connected have been dropped. None are required. Last Days sit before and around #1; the rest fill the gap between #2 and #7; four issues are held back as epilogues.",
+    items:[
+      {s:"Captain America and the Mighty Avengers",i:"#8",note:"Last Days. Read before Secret Wars #0 &mdash; it recaps where things stand"},
+      {s:"Loki: Agent of Asgard",i:"#14&ndash;15",note:"Last Days"},
+      {s:"Captain America and the Mighty Avengers",i:"#9",note:"Last Days"},
+      {s:"Ms. Marvel",i:"#16&ndash;19",note:"Last Days"},
+      {s:"Magneto",i:"#18&ndash;21",note:"Last Days"},
+      {s:"Silk",i:"#7",note:"Last Days"},
+      {s:"Silver Surfer",i:"#13&ndash;14",note:"Last Days. Hold #15 as an epilogue"},
+      {s:"Loki: Agent of Asgard",i:"#16&ndash;17",note:"Last Days, concludes the run"},
+      {s:"Secret Wars: Battleworld",i:"#1&ndash;4",note:"After Secret Wars #2. Anthology of short domain stories"},
+      {s:"Secret Wars Journal",i:"#1&ndash;5",note:"Anthology. Sets up Siege"},
+      {s:"Master of Kung Fu",i:"#1&ndash;4",note:"After Secret Wars #3 &mdash; and everything down to Civil War below sits in this same gap"},
+      {s:"A-Force",i:"#1&ndash;4",note:"Hold #5 as an epilogue"},
+      {s:"Planet Hulk",i:"#1&ndash;5"},
+      {s:"Spider-Verse",i:"#1&ndash;5"},
+      {s:"M.O.D.O.K.: Assassin",i:"#1&ndash;5",note:"Fits entirely before Secret Wars #4"},
+      {s:"Old Man Logan",i:"#1&ndash;4",note:"Hold #5 as an epilogue"},
+      {s:"Infinity Gauntlet",i:"#1&ndash;5"},
+      {s:"X-Men &rsquo;92",i:"#1&ndash;4",note:"Originally a digital Infinite Comic"},
+      {s:"Years of Future Past",i:"#1&ndash;5"},
+      {s:"Giant-Size Little Marvel: AvX",i:"#1&ndash;4"},
+      {s:"Amazing Spider-Man: Renew Your Vows",i:"#1&ndash;5"},
+      {s:"Armor Wars",i:"#1/2, #1&ndash;5",note:"The half issue was a Toys R Us exclusive"},
+      {s:"Marvel Zombies",i:"#1&ndash;4"},
+      {s:"Weirdworld",i:"#1&ndash;4",note:"Hold #5 as an epilogue"},
+      {s:"Captain Marvel and the Carol Corps",i:"#1&ndash;4"},
+      {s:"1872",i:"#1&ndash;4"},
+      {s:"Runaways",i:"#1&ndash;4"},
+      {s:"Squadron Sinister",i:"#1&ndash;4"},
+      {s:"Age of Ultron vs. Marvel Zombies",i:"#1&ndash;4"},
+      {s:"E Is for Extinction",i:"#1&ndash;4"},
+      {s:"Korvac Saga",i:"#1&ndash;4"},
+      {s:"Guardians of Knowhere",i:"#1&ndash;4"},
+      {s:"Civil War",i:"(2015) #1&ndash;5"},
+      {s:"Star-Lord and Kitty Pryde",i:"#1&ndash;3",note:"After Secret Wars #4 &mdash; and so is everything down to Hank Johnson below"},
+      {s:"Red Skull",i:"#1&ndash;3"},
+      {s:"Spider-Island",i:"#1&ndash;5"},
+      {s:"Inhumans: Attilan Rising",i:"#1&ndash;5"},
+      {s:"Captain Britain and the Mighty Defenders",i:"#1&ndash;2",note:"Ewing &amp; Davis"},
+      {s:"Age of Apocalypse",i:"(2015) #1&ndash;5"},
+      {s:"Hail Hydra",i:"#1&ndash;4",note:"Remender, carries threads from his Captain America"},
+      {s:"House of M",i:"(2015) #1&ndash;4"},
+      {s:"Siege",i:"#1&ndash;4",note:"After Secret Wars #6. The closest tie-in to the main story"},
+      {s:"Secret Wars: Agents of Atlas",i:"#1"},
+      {s:"Thors",i:"#1&ndash;4",note:"Aaron. Battleworld police procedural"},
+      {s:"A-Force",i:"#5",note:"Epilogue"},
+      {s:"Old Man Logan",i:"#5",note:"Epilogue"},
+      {s:"Weirdworld",i:"#5",note:"Epilogue"},
+      {s:"Silver Surfer",i:"#15",note:"Epilogue"}
+    ]
+  },
+  {
+    n:"008", title:"After the Collapse", core:true,
+    note:"All-New, All-Different Marvel, 2015&ndash;16. These are the books that pick up the loose threads rather than the whole relaunch.",
+    items:[
+      {s:"Avengers",i:"(2015) #0",note:"Anthology prologue to the new status quo"},
+      {s:"All-New, All-Different Avengers",i:"#1&ndash;15, Annual #1"},
+      {s:"New Avengers",i:"(2015) #1&ndash;18",note:"Ewing. Same title, new team, new premise"},
+      {s:"Ultimates",i:"(2015) #1&ndash;12",note:"Ewing picks up the cosmology Hickman left behind"},
+      {s:"Ultimates 2",i:"#1&ndash;9, #100",note:"Direct continuation"},
+      {s:"U.S.Avengers",i:"the run",note:"Ewing's follow-on to his New Avengers"},
+      {s:"Contest of Champions",i:"(2015) #1&ndash;10",note:"Ewing. Set on the Battlerealm &mdash; what's left of Battleworld"},
+      {s:"Squadron Supreme",i:"(2015) the run",note:"Survivors of universes that didn't make it back"},
+      {s:"Infamous Iron Man",i:"#1&ndash;12",note:"Bendis &amp; Maleev &mdash; where Doom goes next"},
+      {s:"Doctor Doom",i:"(2019) the run",note:"Cantwell. The Doom thread between Infamous Iron Man and One World Under Doom"},
+      {s:"Marvel Two-in-One",i:"#1&ndash;12",note:"Zdarsky. Ben and Johnny looking for the rest of the family"},
+      {s:"Fantastic Four",i:"(2018) #1 onward",note:"Slott. Pays off what Two-in-One is searching for"},
+      {s:"Defenders",i:"(2021) #1&ndash;5",note:"Ewing. The cosmos that came before this one"},
+      {s:"Defenders: Beyond",i:"(2022) #1&ndash;5",note:"Closes the loop on the Ultimates cosmology"}
+    ]
+  },
+  {
+    n:"009", title:"The Maker's Second Universe", core:true,
+    note:"The most direct continuation of all &mdash; the Ultimate thread, restarted by Hickman eight years later.",
+    items:[
+      {s:"Ultimate Invasion",i:"#1&ndash;4",note:"Hickman &amp; Hitch. The Illuminati reassemble"},
+      {s:"Ultimate Universe",i:"#1",note:"One-shot bridge into the new line"},
+      {s:"Ultimate Spider-Man",i:"(2024) #1&ndash;24",note:"Hickman"},
+      {s:"Ultimates",i:"(2024) #1&ndash;24",note:"Deniz Camp"},
+      {s:"Ultimate Universe: One Year In",i:"#1",note:"Read after the first year of the line"},
+      {s:"Ultimate Universe: Two Years In",i:"#1"},
+      {s:"Ultimate Spider-Man: Incursion",i:"the mini",note:"Miles crosses back to 616"},
+      {s:"Ultimate Universe: Finale",i:"(2026) #1",note:"The line closes out"}
+    ]
+  },
+  {
+    n:"010", title:"Where It Stands", core:true,
+    note:"Current as of mid-2026, so this end of the list is still moving.",
+    items:[
+      {s:"One World Under Doom",i:"#1&ndash;9",note:"Ryan North. Doom on the throne again, ten years on"}
+    ]
+  }
+];
+
+/* ---------------------------------------------------------------------------
+   Sync layer.
+
+   The artifact version of this page used window.storage, which only exists
+   inside Claude. Self-hosted, state lives on the server (GET /api/state,
+   PATCH /api/state) so every device sees the same list.
+
+   Three rules make multi-device safe:
+     1. Ticks travel as OPS ({id, checked, when}), never as a whole-state PUT.
+        A phone that was offline for a week would otherwise revert everything
+        ticked on the laptop meanwhile.
+     2. The server merges per item, last-write-wins by timestamp.
+     3. Unsent ops are queued in localStorage, so a tick made on the subway
+        lands the next time the page is opened on the network.
+
+   localStorage also mirrors the last known server state, so the page paints
+   instantly and still shows progress if the hub is unreachable.
+--------------------------------------------------------------------------- */
+
+const API = "/api/state";
+const MIRROR_KEY = "rtsw:mirror:v1";
+const PENDING_KEY = "rtsw:pending:v1";
+const POLL_MS = 60000;
+
+const slug = t => t.replace(/&[a-z]+;/g,"-").replace(/[^a-zA-Z0-9]+/g,"-").toLowerCase();
+
+let items = {};          // id -> {c:bool, t:epochMs}  — last known merged truth
+let pending = [];        // ops not yet accepted by the server
+let syncing = false;
+let dirty = false;       // a change arrived mid-flight; sync again when done
+let syncTimer = null;
+
+const stateEl = () => document.getElementById("saveState");
+
+function lsGet(key, fallback){
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch { return fallback; }
+}
+function lsSet(key, value){
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+function status(text, warn){
+  const el = stateEl();
+  el.textContent = text;
+  el.classList.toggle("warn", !!warn);
+}
+
+function statusIdle(){
+  if (pending.length) status(pending.length + " queued", true);
+  else if (!navigator.onLine) status("Offline");
+  else status("Synced");
+}
+
+// Fold the server's view and our unsent ops into one map, newest edit per item.
+function mergeInto(base, ops){
+  for (const op of ops){
+    const cur = base[op.id];
+    if (!cur || op.t >= cur.t) base[op.id] = { c: op.c, t: op.t };
+  }
+  return base;
+}
+
+/* ---------- render ---------- */
+const host = document.getElementById("sections");
+DATA.forEach((sec, si) => {
+  const el = document.createElement("section");
+  el.className = "blk";
+  el.innerHTML =
+    '<div class="blk-head"><span class="num" style="color:#F03A41">' + sec.n + '</span>' +
+    '<h2>' + sec.title + '</h2>' +
+    '<span class="tally" data-tally="' + si + '"></span></div>' +
+    '<p class="blk-note' + (sec.flag ? ' flag' : '') + '">' + sec.note + '</p>' +
+    '<ul class="list"></ul>';
+  const ul = el.querySelector("ul");
+  sec.items.forEach(it => {
+    const id = slug(sec.n + "-" + it.s + "-" + it.i);
+    const li = document.createElement("li");
+    li.className = "row" + (it.alt ? " alt" : "");
+    li.innerHTML =
+      '<label><input type="checkbox" data-id="' + id + '" data-sec="' + si + '">' +
+      '<span class="box"></span>' +
+      '<span class="title" style="color:inherit">' + it.s + (it.note ? '<span class="note">' + it.note + '</span>' : '') + '</span>' +
+      '<span class="issue" style="color:inherit">' + it.i + '</span></label>';
+    ul.appendChild(li);
+  });
+  host.appendChild(el);
+});
+
+const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+const coreIds = new Set();
+DATA.forEach(sec => { if (sec.core) sec.items.forEach(it => coreIds.add(slug(sec.n + "-" + it.s + "-" + it.i))); });
+const coreTotal = coreIds.size;
+const optTotal = boxes.length - coreTotal;
+
+/* ---------- paint ---------- */
+function applyToBoxes(){
+  boxes.forEach(b => { b.checked = !!(items[b.dataset.id] && items[b.dataset.id].c); });
+}
+
+function paint(){
+  let coreDone = 0, optDone = 0;
+  const per = DATA.map(() => 0);
+  boxes.forEach(b => {
+    if (!b.checked) return;
+    per[+b.dataset.sec]++;
+    if (coreIds.has(b.dataset.id)) coreDone++; else optDone++;
+  });
+  DATA.forEach((sec, si) => {
+    document.querySelector('[data-tally="' + si + '"]').textContent =
+      String(per[si]).padStart(2, "0") + " / " + String(sec.items.length).padStart(2, "0");
+  });
+  const pct = coreTotal ? coreDone / coreTotal : 0;
+  document.getElementById("count").innerHTML = coreDone + "<span> / " + coreTotal + "</span>";
+  document.getElementById("pctLabel").textContent = Math.round(pct * 100) + "% convergence · main line";
+  document.getElementById("barFill").style.width = (pct * 100) + "%";
+  document.getElementById("dockMain").textContent = coreDone + "/" + coreTotal;
+  document.getElementById("dockOpt").textContent = optDone + "/" + optTotal;
+  document.getElementById("c616").setAttribute("transform", "translate(" + (23 * pct) + ",0)");
+  document.getElementById("c1610").setAttribute("transform", "translate(" + (-23 * pct) + ",0)");
+}
+
+/* ---------- sync ---------- */
+async function sync(){
+  if (syncing) { dirty = true; return; }
+  syncing = true;
+  const flushing = pending.slice();
+
+  try {
+    status(flushing.length ? "Saving" : "Syncing");
+    const res = flushing.length
+      ? await fetch(API, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ops: flushing })
+        })
+      : await fetch(API, { headers: { "accept": "application/json" } });
+
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const server = await res.json();
+
+    // The server accepted what we sent, so drop exactly those ops — anything
+    // ticked while the request was in flight stays queued.
+    if (flushing.length) {
+      pending = pending.slice(flushing.length);
+      lsSet(PENDING_KEY, pending);
+    }
+
+    items = mergeInto(Object.assign({}, server.items || {}), pending);
+    lsSet(MIRROR_KEY, items);
+    applyToBoxes();
+    paint();
+    statusIdle();
+  } catch (e) {
+    // Nothing is lost: the ops stay in the queue and localStorage still holds
+    // the mirror, so the next successful sync catches up.
+    status(pending.length ? pending.length + " queued" : "Offline", true);
+  } finally {
+    syncing = false;
+    if (dirty) { dirty = false; sync(); }
+  }
+}
+
+function scheduleSync(){
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(sync, 400);
+}
+
+function record(id, checked){
+  const op = { id: id, c: checked, t: Date.now() };
+  items[id] = { c: op.c, t: op.t };
+  pending.push(op);
+  lsSet(PENDING_KEY, pending);
+  lsSet(MIRROR_KEY, items);
+}
+
+/* ---------- events ---------- */
+document.addEventListener("change", e => {
+  const b = e.target;
+  if (!b.matches('input[type="checkbox"]')) return;
+  record(b.dataset.id, b.checked);
+  paint();
+  status("Saving");
+  scheduleSync();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  const ticked = boxes.filter(b => b.checked);
+  if (!ticked.length) return;
+  if (!confirm("Clear all " + ticked.length + " ticks on every device?")) return;
+  ticked.forEach(b => { b.checked = false; record(b.dataset.id, false); });
+  paint();
+  scheduleSync();
+});
+
+document.addEventListener("visibilitychange", () => { if (!document.hidden) sync(); });
+window.addEventListener("online", sync);
+window.addEventListener("focus", sync);
+setInterval(() => { if (!document.hidden) sync(); }, POLL_MS);
+
+/* ---------- boot ---------- */
+items = lsGet(MIRROR_KEY, {});
+pending = lsGet(PENDING_KEY, []);
+applyToBoxes();
+paint();
+statusIdle();
+sync();
+</script>
+</body>
+</html>

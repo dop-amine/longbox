@@ -1,0 +1,6 @@
+# Local dev state — the deployed copy lives on the server's data volume.
+data/
+*.tmp
+
+.DS_Store
+node_modules/
