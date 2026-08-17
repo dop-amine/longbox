@@ -31,10 +31,11 @@ test("the controls the app needs are present", async () => {
   // stops working with no error anywhere.
   for (const id of [
     "orderSelect", "libBtn", "libMenu", "newBtn", "exampleBtn", "importBtn",
-    "exportBtn", "deleteOrderBtn", "importFile", "seedRow",
+    "exportBtn", "duplicateBtn", "guideBtn", "deleteOrderBtn", "importFile", "seedRow",
     "mastTitle", "eyebrow", "deck", "tagline", "sectionRange",
     "sections", "saveState", "editBtn", "editMetaBtn", "resetBtn",
     "count", "pctLabel", "barFill", "dockMain", "dockOpt",
+    "dockMainLabel", "dockOptLabel",
   ]) {
     assert.ok(html.includes(`id="${id}"`), `missing element: ${id}`);
   }

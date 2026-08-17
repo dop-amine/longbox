@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/order.schema.json",
+  "title": "Reading order",
+  "description": "One reading order: its masthead and its sections. Ids may be omitted — they are generated on import. See /authoring.md for the friendlier field-name aliases that are also accepted.",
+  "type": "object",
+  "required": ["title", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "description": "Only present in exported files; ignored on import, where a fresh id is allocated.",
+      "type": "string"
+    },
+    "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "titleAccent": {
+      "description": "The tail of the title, printed in the accent colour on its own line.",
+      "type": "string",
+      "maxLength": 160
+    },
+    "eyebrow": { "type": "string", "maxLength": 160 },
+    "deck": {
+      "description": "The intro paragraph under the title.",
+      "type": "string",
+      "maxLength": 4000
+    },
+    "tagline": { "type": "string", "maxLength": 160 },
+    "progressWord": {
+      "description": "Used as \"40% <progressWord>\". Defaults to \"complete\".",
+      "type": "string",
+      "maxLength": 40
+    },
+    "mainLabel": {
+      "description": "What the required part of the list is called. Defaults to \"main line\".",
+      "type": "string",
+      "maxLength": 40
+    },
+    "optionalLabel": {
+      "description": "What everything else is called. Defaults to \"optional\".",
+      "type": "string",
+      "maxLength": 40
+    },
+    "sections": {
+      "type": "array",
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/section" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "description": "Unique within the file. Omit it and one is generated.",
+      "type": "string",
+      "pattern": "^[a-z0-9-]{1,120}$"
+    },
+    "section": {
+      "type": "object",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "n": {
+          "description": "The number printed beside the heading. Any string.",
+          "type": "string",
+          "maxLength": 16
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "core": {
+          "description": "Counts toward the main-line percentage. Defaults to true.",
+          "type": "boolean"
+        },
+        "flag": {
+          "description": "Draws a red bar beside the note, for a warning or an aside.",
+          "type": "boolean"
+        },
+        "note": {
+          "description": "Prose: what this stretch is.",
+          "type": "string",
+          "maxLength": 4000
+        },
+        "collected": {
+          "description": "Reference data: which trade or omnibus collects it, and the year. Rendered in mono, separately from the note.",
+          "type": "string",
+          "maxLength": 4000
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": { "$ref": "#/$defs/item" }
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": ["s"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "s": {
+          "description": "The series name only. Put a disambiguating year in `i`.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "i": {
+          "description": "Issue or range, e.g. \"#1-6\" or \"(2015) #1-5\".",
+          "type": "string",
+          "maxLength": 160
+        },
+        "note": { "type": "string", "maxLength": 4000 },
+        "alt": {
+          "description": "Tints the row, for when two titles alternate.",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

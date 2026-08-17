@@ -211,6 +211,22 @@
   }
   body.editing .hint{display:block}
 
+  /* Shown when an order has no sections yet. Without it a new list is a blank
+     page whose only control is hidden behind edit mode. */
+  .empty{
+    margin:38px 0 0;border:1px dashed var(--hair);padding:24px;
+  }
+  .empty h2{
+    font-family:var(--display);font-weight:700;text-transform:uppercase;
+    font-size:clamp(24px,5vw,34px);line-height:1;margin:0 0 10px;
+  }
+  .empty p{font-size:14px;color:var(--ink-soft);margin:0 0 14px;max-width:56ch}
+  .empty .row{display:flex;gap:8px;flex-wrap:wrap}
+  .empty code{
+    font-family:var(--mono);font-size:12px;color:var(--ink);
+    background:#131317;border:1px solid var(--hair);padding:1px 5px;
+  }
+
   /* ---------- footer bar ---------- */
   .dock{
     position:fixed;left:0;right:0;bottom:0;background:#17171B;color:var(--ink);
@@ -261,7 +277,9 @@
       <button id="newBtn" type="button">+ New</button>
       <button id="exampleBtn" type="button">From example</button>
       <button id="importBtn" type="button">Import file</button>
+      <button id="duplicateBtn" type="button">Duplicate</button>
       <button id="exportBtn" type="button">Export</button>
+      <button id="guideBtn" type="button">How to write a list</button>
       <button id="deleteOrderBtn" type="button">Delete this one</button>
     </div>
     <div class="row" id="seedRow"></div>
@@ -310,7 +328,7 @@
 
 <div class="dock" style="background:#17171B;color:#F2F1EB">
   <div class="wrap">
-    <div class="stat">Main line <b id="dockMain">0/0</b> &nbsp;&middot;&nbsp; Optional <b id="dockOpt">0/0</b></div>
+    <div class="stat"><span id="dockMainLabel">Main line</span> <b id="dockMain">0/0</b> &nbsp;&middot;&nbsp; <span id="dockOptLabel">Optional</span> <b id="dockOpt">0/0</b></div>
     <span class="savestate" id="saveState">Loading</span>
     <button id="editBtn" type="button" aria-pressed="false">Edit list</button>
     <button id="resetBtn" type="button">Reset ticks</button>
@@ -456,6 +474,8 @@ function metaForm(){
   form.appendChild(field("deck", "Intro paragraph", order.deck));
   form.appendChild(field("tagline", "Footer tagline", order.tagline));
   form.appendChild(field("progressWord", "Progress word (“40% complete”)", order.progressWord));
+  form.appendChild(field("mainLabel", "Name for the required part (“main line”)", order.mainLabel));
+  form.appendChild(field("optionalLabel", "Name for the rest (“optional”)", order.optionalLabel));
 
   const actions = el("div", "actions");
   const save = el("button", "tool", "Save");
@@ -468,6 +488,8 @@ function metaForm(){
     order.deck = fields.deck.value;
     order.tagline = fields.tagline.value;
     order.progressWord = fields.progressWord.value;
+    order.mainLabel = fields.mainLabel.value;
+    order.optionalLabel = fields.optionalLabel.value;
     editTarget = null;
     commitOrder();
   });
@@ -573,7 +595,7 @@ function sectionForm(sec){
     ["collected", "Collected editions", sec.collected],
   ]);
   const checks = el("div", "checks");
-  const core = checkbox(checks, "Counts toward main line", sec.core);
+  const core = checkbox(checks, "Counts toward " + (order.mainLabel || "main line"), sec.core);
   const flag = checkbox(checks, "Flagged note", sec.flag);
   form.appendChild(checks);
 
@@ -712,6 +734,46 @@ function sectionBlock(sec, si){
   return blk;
 }
 
+// A new order has nothing to show and its only control ("+ Add section") is
+// hidden behind edit mode, so say what to do next and offer every route in.
+function emptyState(){
+  const box = el("div", "empty");
+  box.appendChild(el("h2", null, "Nothing in this list yet"));
+  box.appendChild(el("p", null,
+    "Add sections by hand, copy one of the bundled examples to start from, " +
+    "or import a JSON file you (or a model) wrote."));
+
+  const row = el("div", "row");
+
+  const add = el("button", null, "+ Add the first section");
+  add.type = "button";
+  add.addEventListener("click", () => {
+    if (!editing) document.getElementById("editBtn").click();
+    document.getElementById("addSectionBtn").click();
+  });
+
+  const example = el("button", null, "Start from an example");
+  example.type = "button";
+  example.addEventListener("click", () => {
+    const menu = document.getElementById("libMenu");
+    if (!menu.classList.contains("open")) document.getElementById("libBtn").click();
+    document.getElementById("exampleBtn").click();
+    menu.scrollIntoView({ block: "nearest" });
+  });
+
+  const load = el("button", null, "Import a file");
+  load.type = "button";
+  load.addEventListener("click", () => document.getElementById("importFile").click());
+
+  const guide = el("button", null, "How to write one");
+  guide.type = "button";
+  guide.addEventListener("click", () => window.open("/authoring.md", "_blank", "noopener"));
+
+  [add, example, load, guide].forEach(b => row.appendChild(b));
+  box.appendChild(row);
+  return box;
+}
+
 function renderAll(){
   renderMasthead();
 
@@ -721,6 +783,7 @@ function renderAll(){
 
   host.textContent = "";
   (order.sections || []).forEach((sec, si) => host.appendChild(sectionBlock(sec, si)));
+  if (!(order.sections || []).length) host.appendChild(emptyState());
   paint();
 }
 
@@ -744,9 +807,13 @@ function paint(){
 
   const pct = coreTotal ? coreDone / coreTotal : 0;
   document.getElementById("count").innerHTML = coreDone + "<span> / " + coreTotal + "</span>";
+  const mainLabel = order.mainLabel || "main line";
+  const optionalLabel = order.optionalLabel || "optional";
   document.getElementById("pctLabel").textContent =
-    Math.round(pct * 100) + "% " + (order.progressWord || "complete") + " · main line";
+    Math.round(pct * 100) + "% " + (order.progressWord || "complete") + " · " + mainLabel;
   document.getElementById("barFill").style.width = (pct * 100) + "%";
+  document.getElementById("dockMainLabel").textContent = mainLabel;
+  document.getElementById("dockOptLabel").textContent = optionalLabel;
   document.getElementById("dockMain").textContent = coreDone + "/" + coreTotal;
   document.getElementById("dockOpt").textContent = optDone + "/" + optTotal;
   document.getElementById("c616").setAttribute("transform", "translate(" + (23 * pct) + ",0)");
@@ -1017,6 +1084,27 @@ document.getElementById("importFile").addEventListener("change", async e => {
 
 document.getElementById("exportBtn").addEventListener("click", () => {
   window.location.href = "/api/orders/" + orderId + "/export";
+});
+
+document.getElementById("guideBtn").addEventListener("click", () => {
+  window.open("/authoring.md", "_blank", "noopener");
+});
+
+// Duplicating is the safe way to try a restructure on a list you are midway
+// through — the copy starts with no ticks, the original keeps its own.
+document.getElementById("duplicateBtn").addEventListener("click", async () => {
+  try {
+    const created = await api("/api/orders", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ copy: orderId })
+    });
+    await loadLibrary();
+    await switchOrder(created.id);
+    status("Duplicated");
+  } catch (err) {
+    status("Not duplicated: " + err.message, true);
+  }
 });
 
 document.getElementById("deleteOrderBtn").addEventListener("click", async () => {

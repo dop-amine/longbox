@@ -35,6 +35,7 @@ import { createServer } from "node:http";
 import { readFile, writeFile, rename, mkdir, readdir, unlink } from "node:fs/promises";
 import { join, extname, normalize, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 
 const PORT = Number(process.env.PORT || 8080);
 const DATA_DIR = process.env.DATA_DIR || "/data";
@@ -127,8 +128,13 @@ function validateMeta(input) {
     eyebrow: str(input.eyebrow, "eyebrow", LIMITS.title),
     deck: str(input.deck, "deck", LIMITS.note),
     tagline: str(input.tagline, "tagline", LIMITS.title),
-    // "0% <word> · main line" under the progress meter.
+    // The readout under the meter is "0% <progressWord> · <mainLabel>", and the
+    // dock counts "<mainLabel> 3/10 · <optionalLabel> 1/4". All three are the
+    // order's vocabulary, not the app's: a Secret Wars list converges on its
+    // main line, a completionist run just completes.
     progressWord: str(input.progressWord, "progress word", LIMITS.word) || "complete",
+    mainLabel: str(input.mainLabel, "main label", LIMITS.word) || "main line",
+    optionalLabel: str(input.optionalLabel, "optional label", LIMITS.word) || "optional",
   };
 }
 
@@ -178,6 +184,111 @@ function validateSections(input) {
       }),
     };
   });
+}
+
+/* ---------- tolerant import ---------- */
+
+// Anything written by hand or by a model arrives close-but-not-exact: ids
+// missing, "series" instead of "s", an item that is just a string. The strict
+// validator above guards what the app itself writes; this one meets an author
+// halfway, then hands the result to the strict validator so nothing invalid
+// can slip past. Field names below are the ones people actually reach for.
+const SECTION_KEYS = {
+  title: ["title", "name", "heading", "section"],
+  n: ["n", "number", "num", "index"],
+  note: ["note", "notes", "description", "summary"],
+  collected: ["collected", "collectedEditions", "editions", "volumes"],
+  items: ["items", "entries", "issues", "comics", "books"],
+  core: ["core", "main", "required", "essential"],
+  flag: ["flag", "flagged", "highlight"],
+};
+const ITEM_KEYS = {
+  s: ["s", "series", "title", "name", "comic", "book"],
+  i: ["i", "issue", "issues", "number", "num"],
+  note: ["note", "notes", "comment", "description"],
+  alt: ["alt", "alternate", "tint"],
+};
+const META_KEYS = {
+  title: ["title", "name"],
+  titleAccent: ["titleAccent", "accent"],
+  eyebrow: ["eyebrow", "kicker", "supertitle"],
+  deck: ["deck", "intro", "description", "subtitle"],
+  tagline: ["tagline", "footer"],
+  progressWord: ["progressWord", "progressVerb"],
+  mainLabel: ["mainLabel", "mainName"],
+  optionalLabel: ["optionalLabel", "optionalName"],
+};
+
+function pick(obj, names) {
+  for (const name of names) {
+    if (obj[name] !== undefined && obj[name] !== null) return obj[name];
+  }
+  return undefined;
+}
+
+function mapKeys(obj, spec) {
+  const out = {};
+  for (const [canonical, names] of Object.entries(spec)) {
+    const value = pick(obj, names);
+    if (value !== undefined) out[canonical] = value;
+  }
+  return out;
+}
+
+// Returns { doc, generatedIds }. Never throws for a missing id — that is the
+// single most common thing an author leaves out, and inventing one is safe
+// because nothing has been ticked against this list yet.
+function normaliseImport(input) {
+  if (!input || typeof input !== "object") throw new Invalid("expected a JSON object");
+
+  const meta = mapKeys(input, META_KEYS);
+  const rawSections = pick(input, SECTION_KEYS.items) ?? input.sections ?? [];
+  if (!Array.isArray(rawSections)) throw new Invalid("sections must be an array");
+
+  const seen = new Set();
+  let generatedIds = 0;
+  const takeId = (raw) => {
+    const id = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+    if (!ID_RE.test(id) || seen.has(id)) {
+      generatedIds++;
+      const fresh = "x-" + randomUUID();
+      seen.add(fresh);
+      return fresh;
+    }
+    seen.add(id);
+    return id;
+  };
+
+  const sections = rawSections.map((rawSection) => {
+    const source = typeof rawSection === "string" ? { title: rawSection } : rawSection || {};
+    const sec = mapKeys(source, SECTION_KEYS);
+    const rawItems = Array.isArray(sec.items) ? sec.items : [];
+
+    return {
+      id: takeId(source.id),
+      n: sec.n === undefined ? "" : String(sec.n),
+      title: sec.title === undefined ? "Untitled section" : String(sec.title),
+      // Sections count toward the main line unless they say otherwise: a list
+      // is mostly main line, and an author who omits the flag means the common case.
+      core: sec.core === undefined ? true : !!sec.core,
+      flag: !!sec.flag,
+      note: sec.note === undefined ? "" : String(sec.note),
+      collected: sec.collected === undefined ? "" : String(sec.collected),
+      items: rawItems.map((rawItem) => {
+        const itemSource = typeof rawItem === "string" ? { s: rawItem } : rawItem || {};
+        const it = mapKeys(itemSource, ITEM_KEYS);
+        return {
+          id: takeId(itemSource.id),
+          s: it.s === undefined ? "" : String(it.s),
+          i: it.i === undefined ? "" : String(it.i),
+          note: it.note === undefined ? "" : String(it.note),
+          alt: !!it.alt,
+        };
+      }),
+    };
+  });
+
+  return { doc: { ...meta, sections }, generatedIds };
 }
 
 function slugify(text, fallback = "reading-order") {
@@ -411,6 +522,9 @@ const MIME = {
   ".ico": "image/x-icon",
   ".woff2": "font/woff2",
   ".txt": "text/plain; charset=utf-8",
+  // text/plain rather than text/markdown so the browser shows the authoring
+  // guide inline instead of downloading it.
+  ".md": "text/plain; charset=utf-8",
 };
 
 const staticCache = new Map();
@@ -505,8 +619,14 @@ async function createOrder(payload) {
     const seed = seeds.find((s) => s.id === payload.seed || slugify(s.title || s.id) === payload.seed);
     if (!seed) throw new Invalid(`no example named "${payload.seed}"`, 404);
     doc = seed;
+  } else if (payload.copy) {
+    // Duplicate an order you already have — the safe way to try a restructure
+    // without touching the list you are actually reading. Ticks stay behind.
+    const source = requireOrder(payload.copy);
+    const { id: _id, rev: _rev, updated: _updated, ...rest } = source;
+    doc = { ...rest, title: payload.title || `${source.title} (copy)` };
   } else if (payload.order) {
-    doc = payload.order; // an exported document, coming back in
+    doc = normaliseImport(payload.order).doc; // hand-written or AI-written
   } else {
     doc = {
       title: payload.title || "New reading order",
@@ -551,9 +671,41 @@ const server = createServer(async (req, res) => {
       );
     }
 
+    // Dry run: check a document without saving it. Point an author (or their
+    // model) at this before importing, so a malformed list produces a specific
+    // complaint instead of a rejected upload.
+    if (path === "/api/validate" && req.method === "POST") {
+      const payload = await parseBody(req);
+      try {
+        const { doc, generatedIds } = normaliseImport(payload.order || payload);
+        const meta = validateMeta(doc);
+        const sections = validateSections(doc.sections);
+        return sendJson(res, 200, {
+          ok: true,
+          title: meta.title,
+          sections: sections.length,
+          items: sections.reduce((n, s) => n + s.items.length, 0),
+          generatedIds,
+          emptySections: sections.filter((s) => !s.items.length).map((s) => s.title),
+        });
+      } catch (err) {
+        if (!err.status || err.status >= 500) throw err;
+        return sendJson(res, 200, { ok: false, error: err.message });
+      }
+    }
+
     if (path === "/api/orders") {
       if (req.method === "GET") {
-        return sendJson(res, 200, [...orders.values()].map(summarise));
+        // Sorted by title, always. In-memory the orders sit in creation order
+        // and on disk they come back in filename order, so an unsorted index
+        // quietly reshuffles the dropdown the first time the service restarts.
+        return sendJson(
+          res,
+          200,
+          [...orders.values()]
+            .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }))
+            .map(summarise)
+        );
       }
       if (req.method === "POST") {
         const order = await createOrder(await parseBody(req));

@@ -21,7 +21,8 @@ plus a `public/` directory.
 | Endpoint | Method | Purpose |
 |---|---|---|
 | `/api/orders` | GET | the library index |
-| `/api/orders` | POST | create one: `{title}`, `{seed}` or `{order}` (import) |
+| `/api/orders` | POST | create one: `{title}`, `{seed}`, `{copy}` or `{order}` (import) |
+| `/api/validate` | POST | dry run — check a document without saving it |
 | `/api/orders/:id` | GET | one order: masthead text + sections |
 | `/api/orders/:id` | PUT | replace it, guarded by `rev` |
 | `/api/orders/:id` | DELETE | remove it and its ticks |
@@ -82,10 +83,16 @@ library menu:
 
 - **New** — an empty order, ready for sections
 - **From example** — copy a bundled seed into a new order of your own
-- **Import file** — an exported `.json` from anywhere
+- **Import file** — a `.json` from anywhere (see *Writing a list* below)
+- **Duplicate** — copy the current order, without its ticks. The safe way to
+  try a restructure on a list you are midway through
 - **Export** — the current order as a portable file, without ticks
+- **How to write a list** — opens the authoring guide the app serves at
+  `/authoring.md`
 - **Delete this one** — the order and every tick on it (the last one is
   protected, so the page always has something to show)
+
+An order with no sections shows what to do next rather than a blank page.
 
 The current order is in the URL (`/#road-to-secret-wars`), so it is
 bookmarkable and shareable.
@@ -101,11 +108,38 @@ bookmarkable and shareable.
   collection covers it, and the year. Its own field, rendered in mono under the
   note, because it is reference data you scan while hunting for the book
 - reorder entries within a section, and reorder sections
-- *Title & intro* edits the masthead: title, the accent word printed in red,
-  the eyebrow line, the intro paragraph, the footer tagline, and the word used
-  in the progress readout ("40% **complete**")
+- *Title & intro* edits the masthead and the list's own vocabulary: title, the
+  accent word printed in red, the eyebrow line, the intro paragraph, the footer
+  tagline, the word in the progress readout ("40% **complete**"), and what the
+  required and optional halves are called ("main line" / "optional"). A Secret
+  Wars list converges on its main line; a completionist run just completes
 
 Changes save immediately. Ticking still works while editing.
+
+## Writing a list outside the app
+
+For anything longer than a few entries it is quicker to write JSON than to
+click. The app serves its own guide at **`/authoring.md`** and a JSON Schema at
+**`/order.schema.json`** — both are in `public/`, so they ship with the image
+and are available on whatever host you run it on.
+
+The short version:
+
+- Only `title` and `sections` are required, and every item needs a series name.
+- **Leave the ids out.** They are generated on import. Include them only when
+  re-importing an exported file whose ticks you want to keep matching.
+- Friendlier field names are accepted and normalised — `series` for `s`,
+  `issue` for `i`, `name`/`heading` for `title`, `entries` for `items`, and so
+  on. A section or item written as a bare string is read as its title.
+- `POST /api/validate` reports what would happen without saving anything:
+  section and item counts, how many ids it would generate, and which sections
+  have no items.
+
+The guide includes a prompt for generating a list with a model, plus the two
+things to check afterwards: **which volume collects what** (stated confidently
+and wrongly more often than anything else, and exactly what you rely on in
+front of a shelf) and **the order itself**, which is an editorial opinion
+rather than a fact.
 
 ## Adding your own example
 
@@ -164,7 +198,7 @@ list.
 ```bash
 node test/page.test.mjs      #  6 assertions — script/markup agreement
 node test/sync.test.mjs      # 10 assertions — ticks and merge rules
-node test/orders.test.mjs    # 20 assertions — library, editing, migration
+node test/orders.test.mjs    # 27 assertions — library, editing, import, migration
 node --check server.mjs
 python3 scripts/make-icon.py # regenerate the iOS home-screen icon (stdlib only)
 ```

@@ -216,6 +216,129 @@ test("the last remaining order cannot be deleted", async () => {
   assert.match((await res.json()).error, /only reading order/i);
 });
 
+test("the progress vocabulary belongs to the order", async () => {
+  // "convergence" and "main line" are this list's words, not the app's.
+  const order = await getOrder();
+  assert.equal(order.mainLabel, "main line", "a default is supplied");
+  order.progressWord = "read";
+  order.mainLabel = "the run";
+  order.optionalLabel = "extras";
+  assert.equal((await putOrder(order)).status, 200);
+  const saved = await getOrder();
+  assert.equal(saved.progressWord, "read");
+  assert.equal(saved.mainLabel, "the run");
+  assert.equal(saved.optionalLabel, "extras");
+
+  saved.progressWord = "";
+  saved.mainLabel = "";
+  const back = await (await putOrder(saved)).json();
+  assert.equal(back.progressWord, "complete", "blank falls back to a default");
+  assert.equal(back.mainLabel, "main line");
+});
+
+test("an import without ids is accepted and ids are generated", async () => {
+  // The single most common thing an author or a model leaves out.
+  const res = await post({
+    order: {
+      title: "No Ids Here",
+      sections: [{ title: "One", items: [{ s: "A Comic", i: "#1" }, { s: "Another" }] }],
+    },
+  });
+  assert.equal(res.status, 201);
+  const created = await res.json();
+  assert.equal(created.sections[0].items.length, 2);
+  for (const it of created.sections[0].items) {
+    assert.match(it.id, /^x-[0-9a-f-]+$/, "a usable id was generated");
+  }
+  assert.equal(created.sections[0].core, true, "sections count toward the main line by default");
+});
+
+test("an import using friendlier field names still works", async () => {
+  const res = await post({
+    order: {
+      name: "Aliased",
+      intro: "written by someone who did not read the field list",
+      sections: [
+        {
+          heading: "Part One",
+          number: "01",
+          notes: "a note",
+          volumes: "Some Omnibus (2020)",
+          required: false,
+          entries: [{ series: "Sandman", issue: "#1-8", comment: "start here" }],
+        },
+      ],
+    },
+  });
+  assert.equal(res.status, 201);
+  const created = await res.json();
+  assert.equal(created.title, "Aliased");
+  assert.ok(created.deck.startsWith("written by"));
+  const sec = created.sections[0];
+  assert.equal(sec.title, "Part One");
+  assert.equal(sec.n, "01");
+  assert.equal(sec.note, "a note");
+  assert.equal(sec.collected, "Some Omnibus (2020)");
+  assert.equal(sec.core, false);
+  assert.equal(sec.items[0].s, "Sandman");
+  assert.equal(sec.items[0].i, "#1-8");
+  assert.equal(sec.items[0].note, "start here");
+});
+
+test("a section or item written as a bare string is understood", async () => {
+  const res = await post({
+    order: { title: "Terse", sections: [{ title: "Part", items: ["First Series", "Second Series"] }] },
+  });
+  assert.equal(res.status, 201);
+  const created = await res.json();
+  assert.deepEqual(created.sections[0].items.map((i) => i.s), ["First Series", "Second Series"]);
+});
+
+test("validate reports on a document without saving it", async () => {
+  const before = (await json("/api/orders")).length;
+  const report = await json("/api/validate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      order: { title: "Dry Run", sections: [{ title: "Full", items: [{ s: "X" }] }, { title: "Empty" }] },
+    }),
+  });
+  assert.equal(report.ok, true);
+  assert.equal(report.sections, 2);
+  assert.equal(report.items, 1);
+  assert.ok(report.generatedIds >= 3, "ids it would generate are counted");
+  assert.deepEqual(report.emptySections, ["Empty"], "a section with no items is worth flagging");
+  assert.equal((await json("/api/orders")).length, before, "nothing was created");
+});
+
+test("validate explains what is wrong instead of throwing", async () => {
+  const report = await json("/api/validate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ order: { title: "Broken", sections: [{ title: "S", items: [{ i: "#1" }] }] } }),
+  });
+  assert.equal(report.ok, false);
+  assert.match(report.error, /series is required/i);
+});
+
+test("an order can be duplicated, without its ticks", async () => {
+  const source = await getOrder();
+  const ticked = source.sections[0].items[1];
+  await tick(EXAMPLE, ticked.id);
+
+  const res = await post({ copy: EXAMPLE, title: "A Working Copy" });
+  assert.equal(res.status, 201);
+  const copy = await res.json();
+  assert.equal(copy.title, "A Working Copy");
+  assert.equal(copy.sections.length, source.sections.length);
+  assert.equal(copy.rev, 0);
+
+  const copyState = await json(`/api/state/${copy.id}`);
+  assert.deepEqual(copyState.items, {}, "a copy starts unread");
+  const original = await json(`/api/state/${EXAMPLE}`);
+  assert.ok(original.items[ticked.id].c, "the original keeps its ticks");
+});
+
 test("a duplicate id is refused", async () => {
   const order = await getOrder();
   order.sections[0].items.push({ ...order.sections[0].items[0] });
