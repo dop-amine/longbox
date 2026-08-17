@@ -36,7 +36,7 @@ test("the controls the app needs are present", async () => {
     "sections", "saveState", "editBtn", "editMetaBtn", "resetBtn",
     "count", "pctLabel", "barFill", "dockMain", "dockOpt",
     "dockMainLabel", "dockOptLabel",
-    "filterInput", "hideDoneBtn", "filterCount",
+    "filterInput", "hideDoneBtn", "filterCount", "jumpBtn",
     "undoBtn", "shareBtn", "backupBtn", "restoreBtn", "restoreFile",
   ]) {
     assert.ok(html.includes(`id="${id}"`), `missing element: ${id}`);

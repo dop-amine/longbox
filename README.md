@@ -108,6 +108,14 @@ library menu:
 
 An order with no sections shows what to do next rather than a blank page.
 
+**Resume** in the bottom bar jumps to the first thing you have not read and
+outlines it. It prefers the main line, then falls back to anything — a list
+whose optional sections you never intend to read would otherwise park Resume
+on the first of them forever. With a filter active it finds the next unread
+*match*, rather than scrolling to something the filter is hiding, and it greys
+out when there is nothing left. It stays available in read-only mode, because
+reading is exactly when you want it.
+
 Above the list there is a filter box and a **Hide ticked** toggle. Both are
 presentational — a hidden row still counts toward the totals, because progress
 is a fact about the list, not about what you are currently looking at.

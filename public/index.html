@@ -276,6 +276,11 @@
   button:hover{border-color:var(--red);color:#fff}
   button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
   button[aria-pressed=true]{border-color:var(--red);color:#fff;background:#22161A}
+  button:disabled{opacity:.35;cursor:default}
+  button:disabled:hover{border-color:#55555C;color:var(--ink)}
+  /* Marks the row Resume just jumped to, so the eye lands somewhere definite
+     instead of on the middle of the screen. */
+  li.row.jump-target{outline:2px solid var(--blue);outline-offset:-2px}
   .savestate{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#9A9AA4}
   .savestate.warn{color:var(--red)}
   @media(max-width:560px){
@@ -375,6 +380,7 @@
   <div class="wrap">
     <div class="stat"><span id="dockMainLabel">Main line</span> <b id="dockMain">0/0</b> &nbsp;&middot;&nbsp; <span id="dockOptLabel">Optional</span> <b id="dockOpt">0/0</b></div>
     <span class="savestate" id="saveState">Loading</span>
+    <button id="jumpBtn" type="button" title="Jump to where you left off">Resume</button>
     <button id="editBtn" type="button" aria-pressed="false">Edit list</button>
     <button id="resetBtn" type="button">Reset ticks</button>
   </div>
@@ -753,6 +759,8 @@ function itemRow(sec, it, si, ii){
 
 function sectionBlock(sec, si){
   const blk = el("section", "blk");
+  // Resume reads this to prefer the main line over side reading.
+  blk.dataset.core = String(!!sec.core);
 
   const head = el("div", "blk-head");
   head.appendChild(el("span", "num", sec.n));
@@ -856,6 +864,26 @@ function renderAll(){
   applyFilters();
 }
 
+// The first thing you have not read yet, in list order.
+//
+// Main line first, then anything: a list whose optional sections you never
+// intend to read would otherwise park Resume on the first of them forever.
+// Only visible rows count, so with a filter active it finds the next unread
+// match rather than scrolling to something the filter is hiding.
+function nextUnreadRow(){
+  const rows = Array.from(host.querySelectorAll("li.row"))
+    .filter(li => li.style.display !== "none");
+  const unread = li => {
+    const box = li.querySelector('input[data-id]');
+    return box && !box.checked;
+  };
+  const core = li => {
+    const blk = li.closest("section.blk");
+    return blk && blk.dataset.core === "true";
+  };
+  return rows.find(li => unread(li) && core(li)) || rows.find(unread) || null;
+}
+
 // Filtering is presentational only — nothing is written, and a hidden row is
 // still counted in the totals, because progress is a fact about the list
 // rather than about what you are currently looking at.
@@ -882,6 +910,15 @@ function applyFilters(){
 
   document.getElementById("filterCount").textContent =
     query || hideDone ? shown + " shown" : "";
+
+  // Resume only means something while something is unread.
+  const next = nextUnreadRow();
+  const jump = document.getElementById("jumpBtn");
+  jump.disabled = !next;
+  const title = next && next.querySelector(".title");
+  jump.title = next
+    ? "Jump to " + ((title && title.childNodes[0].textContent) || "the next unread entry")
+    : "Nothing left to read here";
 }
 
 function paint(){
@@ -1187,6 +1224,15 @@ document.getElementById("exportBtn").addEventListener("click", () => {
 
 document.getElementById("guideBtn").addEventListener("click", () => {
   window.open("/authoring.md", "_blank", "noopener");
+});
+
+document.getElementById("jumpBtn").addEventListener("click", () => {
+  const row = nextUnreadRow();
+  if (!row) { status("Nothing left to read"); return; }
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  row.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+  row.classList.add("jump-target");
+  setTimeout(() => row.classList.remove("jump-target"), 1600);
 });
 
 document.getElementById("filterInput").addEventListener("input", e => {
