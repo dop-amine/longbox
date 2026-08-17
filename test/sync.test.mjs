@@ -11,6 +11,8 @@ import { fileURLToPath } from "node:url";
 const SERVER = fileURLToPath(new URL("../server.mjs", import.meta.url));
 const PORT = 8099;
 const BASE = `http://127.0.0.1:${PORT}`;
+const ORDER = "road-to-secret-wars";
+const STATE = `${BASE}/api/state/${ORDER}`;
 
 let dataDir;
 let child;
@@ -37,9 +39,9 @@ async function stop() {
   child = null;
 }
 
-const get = () => fetch(`${BASE}/api/state`).then((r) => r.json());
+const get = () => fetch(STATE).then((r) => r.json());
 const patch = (ops) =>
-  fetch(`${BASE}/api/state`, {
+  fetch(STATE, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ ops }),
@@ -48,10 +50,9 @@ const patch = (ops) =>
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
 
-test("starts empty", async () => {
+test("starts with nothing ticked", async () => {
   const state = await get();
   assert.deepEqual(state.items, {});
-  assert.equal(state.rev, 0);
 });
 
 test("a tick is stored", async () => {
@@ -66,21 +67,18 @@ test("an older op loses to a newer one", async () => {
   // tick must survive. This is the case a whole-state PUT would get wrong.
   await patch([{ id: "002-infinity-1", c: true, t: 5000 }]);
   await patch([{ id: "002-infinity-1", c: false, t: 4000 }]);
-  const state = await get();
-  assert.equal(state.items["002-infinity-1"].c, true);
+  assert.equal((await get()).items["002-infinity-1"].c, true);
 });
 
 test("a newer untick wins", async () => {
   await patch([{ id: "002-infinity-1", c: false, t: 6000 }]);
-  const state = await get();
-  assert.equal(state.items["002-infinity-1"].c, false);
+  assert.equal((await get()).items["002-infinity-1"].c, false);
 });
 
 test("future timestamps are clamped to now", async () => {
   const future = Date.now() + 86_400_000;
   await patch([{ id: "005-avengers-35", c: true, t: future }]);
-  const state = await get();
-  assert.ok(state.items["005-avengers-35"].t <= Date.now());
+  assert.ok((await get()).items["005-avengers-35"].t <= Date.now());
 });
 
 test("malformed ops are ignored, not fatal", async () => {
@@ -97,7 +95,7 @@ test("malformed ops are ignored, not fatal", async () => {
 });
 
 test("a bad body is a 400, not a crash", async () => {
-  const res = await fetch(`${BASE}/api/state`, {
+  const res = await fetch(STATE, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: "{not json",
@@ -109,7 +107,7 @@ test("the page is served", async () => {
   const res = await fetch(`${BASE}/`);
   assert.equal(res.status, 200);
   assert.match(res.headers.get("content-type"), /text\/html/);
-  assert.match(await res.text(), /Road to/);
+  assert.match(await res.text(), /Reading Order/i);
 });
 
 test("path traversal is refused", async () => {
@@ -117,7 +115,7 @@ test("path traversal is refused", async () => {
   assert.ok(res.status === 404 || res.status === 403 || res.status === 301);
 });
 
-test("state survives a restart", async () => {
+test("ticks survive a restart", async () => {
   await stop();
   await start();
   const state = await get();

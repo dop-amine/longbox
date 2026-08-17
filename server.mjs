@@ -1,64 +1,68 @@
-// Road to Secret Wars — static checklist + a tiny sync API.
+// A self-hosted checklist for comic reading orders.
 //
 // Deliberately zero npm dependencies: node: builtins only. The whole point of
 // this service is to outlive interest in it, and a dependency-free single file
 // has no supply chain to rot, no lockfile to refresh and no build step.
 //
-// Two documents live in DATA_DIR, and the split is the important design idea:
+// DATA LAYOUT (under DATA_DIR)
 //
-//   list.json   — the reading order itself (sections, series, issues). Edited
-//                 rarely and deliberately, through the site's edit mode.
-//   state.json  — which issues are ticked. Edited constantly, from any device.
+//   orders/<id>.json  — one reading order: its masthead text and its sections.
+//                       Edited rarely and deliberately, through the site.
+//   state.json        — which issues are ticked, namespaced by order id.
+//                       Edited constantly, from any device.
 //
-// They are separate files with separate concurrency models because they have
-// separate failure modes. Ticks arrive as per-item ops merged last-write-wins,
-// so two devices can never revert each other. List edits are whole-document
-// writes guarded by a revision number, so a stale editor is refused outright
-// rather than silently overwriting a restructure made elsewhere.
+// The split matters because the two fail differently. Ticks arrive as per-item
+// ops merged last-write-wins, so two devices can never revert each other. Order
+// edits are whole-document writes guarded by a revision number, so a stale
+// editor is refused outright rather than silently overwriting a restructure
+// made elsewhere.
 //
-// The link between them is the item id, which is FROZEN. Ids were originally
-// derived from the item's text, which meant renaming an issue orphaned its
-// tick; seed/list.json pins the ids that scheme produced, and nothing
-// recomputes them again. An id, once assigned, outlives every edit to the row.
+// Item ids are FROZEN. They were once derived from the item's text, which meant
+// renaming an issue orphaned its tick; nothing recomputes them now. An id, once
+// assigned, outlives every edit to the row. Ticks are namespaced per order, so
+// two orders may reuse an id without colliding.
+//
+// seed/*.json are bundled example orders. They are installed when the data
+// directory is empty and are otherwise offered as importable starting points —
+// dropping a new .json in there adds one, no code change.
 //
 // There is no auth here on purpose. The gate is the network: the container
 // binds loopback only, and a reverse proxy in front restricts by source IP.
 // Do not expose this publicly without adding a gate first — anyone who can
-// reach it can rewrite the checklist.
+// reach it can rewrite every list.
 
 import { createServer } from "node:http";
-import { readFile, writeFile, rename, mkdir } from "node:fs/promises";
-import { join, extname, normalize } from "node:path";
+import { readFile, writeFile, rename, mkdir, readdir, unlink } from "node:fs/promises";
+import { join, extname, normalize, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.PORT || 8080);
 const DATA_DIR = process.env.DATA_DIR || "/data";
 const PUBLIC_DIR = fileURLToPath(new URL("./public/", import.meta.url));
-const SEED_FILE = fileURLToPath(new URL("./seed/list.json", import.meta.url));
+const SEED_DIR = fileURLToPath(new URL("./seed/", import.meta.url));
+const ORDERS_DIR = join(DATA_DIR, "orders");
 const STATE_FILE = join(DATA_DIR, "state.json");
-const LIST_FILE = join(DATA_DIR, "list.json");
+const LEGACY_LIST = join(DATA_DIR, "list.json");
 
-const MAX_BODY = 1024 * 1024; // the whole list document is ~60 KB
+const MAX_BODY = 4 * 1024 * 1024;
 const MAX_OPS = 2000;
-const MAX_ITEMS = 5000;
+const MAX_TICKS_PER_ORDER = 5000;
 const ID_RE = /^[a-z0-9-]{1,120}$/;
 
-// Field caps. Generous enough that no real entry hits them, small enough that
-// the document can't grow without bound through the editor.
-const LIMITS = { n: 16, title: 160, note: 4000, s: 240, i: 160 };
+const LIMITS = { n: 16, title: 160, note: 4000, s: 240, i: 160, word: 40 };
+const MAX_ORDERS = 100;
 const MAX_SECTIONS = 200;
 const MAX_ITEMS_PER_SECTION = 1000;
 const MAX_TOTAL_ITEMS = 4000;
 
-/* ---------- state ---------- */
+/* ---------- in-memory state ---------- */
 
-// { rev, updated, items: { <id>: { c: bool, t: epochMs } } }
-let state = { rev: 0, updated: 0, items: {} };
-// { rev, updated, sections: [ { id, n, title, core, flag, note, items: [...] } ] }
-let list = { rev: 0, updated: 0, sections: [] };
+// id -> { id, rev, updated, title, titleAccent, eyebrow, deck, tagline,
+//         progressWord, sections: [...] }
+const orders = new Map();
+// { rev, updated, orders: { <orderId>: { <itemId>: { c, t } } } }
+let state = { rev: 0, updated: 0, orders: {} };
 
-// Serialises writes. Concurrent requests would otherwise interleave
-// read-modify-write and lose one of them.
 let writeChain = Promise.resolve();
 
 async function readJson(file) {
@@ -84,78 +88,16 @@ function persist(file, doc) {
   return writeChain;
 }
 
-async function load() {
-  const savedState = await readJson(STATE_FILE);
-  if (savedState && savedState.items) {
-    state = {
-      rev: Number(savedState.rev) || 0,
-      updated: Number(savedState.updated) || 0,
-      items: savedState.items,
-    };
-  }
+const orderFile = (id) => join(ORDERS_DIR, `${id}.json`);
+const persistOrder = (order) => persist(orderFile(order.id), order);
+const persistState = () => persist(STATE_FILE, state);
 
-  const savedList = await readJson(LIST_FILE);
-  if (savedList && Array.isArray(savedList.sections)) {
-    list = {
-      rev: Number(savedList.rev) || 0,
-      updated: Number(savedList.updated) || 0,
-      sections: savedList.sections,
-    };
-    console.log(`list: ${list.sections.length} sections (rev ${list.rev})`);
-  } else {
-    const seed = await readJson(SEED_FILE);
-    if (!seed) {
-      console.error(`refusing to start: no ${LIST_FILE} and no seed at ${SEED_FILE}`);
-      process.exit(1);
-    }
-    list = { rev: 0, updated: Date.now(), sections: seed.sections };
-    await persist(LIST_FILE, list);
-    console.log(`list: seeded ${list.sections.length} sections from ${SEED_FILE}`);
-  }
-
-  console.log(`state: ${Object.keys(state.items).length} items (rev ${state.rev})`);
-}
-
-/* ---------- ticks ---------- */
-
-// Per-item last-write-wins. This is what makes two devices safe: a full-state
-// save from a phone that was offline would revert ticks made on the laptop,
-// whereas merging per item by timestamp only ever loses the older edit of the
-// same item.
-function applyOps(ops) {
-  const now = Date.now();
-  let changed = 0;
-  for (const op of ops) {
-    if (!op || typeof op !== "object") continue;
-    if (typeof op.id !== "string" || !ID_RE.test(op.id)) continue;
-    if (typeof op.c !== "boolean") continue;
-
-    // Clamp forward-skewed client clocks; a device an hour fast would
-    // otherwise win every future conflict against every other device.
-    const t = Math.min(Number(op.t) || now, now);
-    const cur = state.items[op.id];
-    if (cur && cur.t > t) continue; // a newer edit already won
-    if (cur && cur.c === op.c) continue; // no-op replay
-    if (!cur && op.c === false) continue; // unticking something never ticked
-    if (!cur && Object.keys(state.items).length >= MAX_ITEMS) continue;
-
-    state.items[op.id] = { c: op.c, t };
-    changed++;
-  }
-  if (changed) {
-    state.rev++;
-    state.updated = now;
-    persist(STATE_FILE, state);
-  }
-  return changed;
-}
-
-/* ---------- list ---------- */
+/* ---------- validation ---------- */
 
 class Invalid extends Error {
-  constructor(message) {
+  constructor(message, status = 400) {
     super(message);
-    this.status = 400;
+    this.status = status;
   }
 }
 
@@ -175,15 +117,29 @@ function str(value, field, max, { required = false } = {}) {
   return clean;
 }
 
-function validateList(input) {
-  if (!input || typeof input !== "object") throw new Invalid("expected an object");
-  if (!Array.isArray(input.sections)) throw new Invalid("sections must be an array");
-  if (input.sections.length > MAX_SECTIONS) throw new Invalid("too many sections");
+// The masthead text. Every field is optional except the title, so a brand new
+// order is usable before anyone writes any copy for it.
+function validateMeta(input) {
+  return {
+    title: str(input.title, "title", LIMITS.title, { required: true }),
+    // The part of the title printed in the accent colour, on its own line.
+    titleAccent: str(input.titleAccent, "title accent", LIMITS.title),
+    eyebrow: str(input.eyebrow, "eyebrow", LIMITS.title),
+    deck: str(input.deck, "deck", LIMITS.note),
+    tagline: str(input.tagline, "tagline", LIMITS.title),
+    // "0% <word> · main line" under the progress meter.
+    progressWord: str(input.progressWord, "progress word", LIMITS.word) || "complete",
+  };
+}
+
+function validateSections(input) {
+  if (!Array.isArray(input)) throw new Invalid("sections must be an array");
+  if (input.length > MAX_SECTIONS) throw new Invalid("too many sections");
 
   const seen = new Set();
   let total = 0;
 
-  const sections = input.sections.map((sec, si) => {
+  return input.map((sec, si) => {
     if (!sec || typeof sec !== "object") throw new Invalid(`section ${si} is not an object`);
     if (typeof sec.id !== "string" || !ID_RE.test(sec.id)) throw new Invalid(`section ${si} has an invalid id`);
     // A duplicate id makes two rows tick as one, and is unrecoverable once
@@ -222,30 +178,229 @@ function validateList(input) {
       }),
     };
   });
+}
 
-  return sections;
+function slugify(text, fallback = "reading-order") {
+  const slug = text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+  return slug || fallback;
+}
+
+function uniqueOrderId(base) {
+  let id = slugify(base);
+  if (!orders.has(id)) return id;
+  for (let n = 2; n < 1000; n++) {
+    const candidate = `${id}-${n}`.slice(0, 64);
+    if (!orders.has(candidate)) return candidate;
+  }
+  throw new Invalid("could not allocate an id for this order");
+}
+
+const countItems = (order) => order.sections.reduce((n, s) => n + s.items.length, 0);
+
+const summarise = (order) => ({
+  id: order.id,
+  title: order.title,
+  titleAccent: order.titleAccent,
+  rev: order.rev,
+  updated: order.updated,
+  sections: order.sections.length,
+  items: countItems(order),
+});
+
+/* ---------- loading, seeding, migration ---------- */
+
+async function listSeeds() {
+  let files = [];
+  try {
+    files = (await readdir(SEED_DIR)).filter((f) => f.endsWith(".json"));
+  } catch {
+    return [];
+  }
+  const seeds = [];
+  for (const file of files.sort()) {
+    const doc = await readJson(join(SEED_DIR, file));
+    if (!doc) continue;
+    const id = doc.id || basename(file, ".json");
+    seeds.push({ ...doc, id });
+  }
+  return seeds;
+}
+
+function adoptOrder(id, doc, rev = 0) {
+  const order = {
+    id,
+    rev,
+    updated: Number(doc.updated) || Date.now(),
+    ...validateMeta(doc),
+    sections: validateSections(doc.sections || []),
+  };
+  orders.set(id, order);
+  return order;
+}
+
+// The single-list layout this started as: DATA_DIR/list.json plus a flat
+// state.json. Convert in place, keep the originals as .migrated rather than
+// deleting them, and namespace the existing ticks under the new order.
+async function migrateLegacy() {
+  const legacy = await readJson(LEGACY_LIST);
+  if (!legacy || !Array.isArray(legacy.sections)) return false;
+
+  const seeds = await listSeeds();
+  // Prefer the seed's identity, so the migrated order matches the shipped
+  // example rather than inventing a new title.
+  const example = seeds[0] || {};
+  const id = slugify(example.title || "road-to-secret-wars");
+
+  const order = adoptOrder(
+    id,
+    {
+      title: example.title || "Road to Secret Wars",
+      titleAccent: example.titleAccent || "",
+      eyebrow: example.eyebrow || "",
+      deck: example.deck || "",
+      tagline: example.tagline || "",
+      progressWord: example.progressWord || "complete",
+      sections: legacy.sections,
+      updated: legacy.updated,
+    },
+    Number(legacy.rev) || 0
+  );
+  await persistOrder(order);
+
+  const legacyState = await readJson(STATE_FILE);
+  if (legacyState && legacyState.items && !legacyState.orders) {
+    state = {
+      rev: Number(legacyState.rev) || 0,
+      updated: Number(legacyState.updated) || Date.now(),
+      orders: { [id]: legacyState.items },
+    };
+    await persistState();
+    console.log(`migrated ${Object.keys(legacyState.items).length} ticks into "${id}"`);
+  }
+
+  await rename(LEGACY_LIST, `${LEGACY_LIST}.migrated`);
+  console.log(`migrated legacy list.json -> orders/${id}.json (kept a .migrated backup)`);
+  return true;
+}
+
+async function load() {
+  await mkdir(ORDERS_DIR, { recursive: true });
+
+  const saved = await readJson(STATE_FILE);
+  if (saved && saved.orders) {
+    state = {
+      rev: Number(saved.rev) || 0,
+      updated: Number(saved.updated) || 0,
+      orders: saved.orders,
+    };
+  }
+
+  let files = [];
+  try {
+    files = (await readdir(ORDERS_DIR)).filter((f) => f.endsWith(".json"));
+  } catch {}
+
+  for (const file of files.sort()) {
+    const doc = await readJson(join(ORDERS_DIR, file));
+    if (!doc) continue;
+    const id = doc.id || basename(file, ".json");
+    try {
+      adoptOrder(id, doc, Number(doc.rev) || 0);
+    } catch (err) {
+      console.error(`refusing to start: orders/${file} is not a valid order — ${err.message}`);
+      process.exit(1);
+    }
+  }
+
+  if (!orders.size) {
+    const migrated = await migrateLegacy();
+    if (!migrated) {
+      const seeds = await listSeeds();
+      if (!seeds.length) {
+        console.error(`refusing to start: no orders in ${ORDERS_DIR} and no seeds in ${SEED_DIR}`);
+        process.exit(1);
+      }
+      for (const seed of seeds) {
+        const order = adoptOrder(slugify(seed.title || seed.id), seed);
+        await persistOrder(order);
+        console.log(`installed example "${order.title}" (${order.sections.length} sections)`);
+      }
+    }
+  }
+
+  console.log(
+    `${orders.size} reading order(s): ` +
+      [...orders.values()].map((o) => `${o.id} (${countItems(o)} items)`).join(", ")
+  );
+}
+
+/* ---------- ticks ---------- */
+
+function ticksFor(orderId) {
+  if (!state.orders[orderId]) state.orders[orderId] = {};
+  return state.orders[orderId];
+}
+
+// Per-item last-write-wins. This is what makes two devices safe: a full-state
+// save from a phone that was offline would revert ticks made on the laptop,
+// whereas merging per item by timestamp only ever loses the older edit of the
+// same item.
+function applyOps(orderId, ops) {
+  const items = ticksFor(orderId);
+  const now = Date.now();
+  let changed = 0;
+
+  for (const op of ops) {
+    if (!op || typeof op !== "object") continue;
+    if (typeof op.id !== "string" || !ID_RE.test(op.id)) continue;
+    if (typeof op.c !== "boolean") continue;
+
+    // Clamp forward-skewed client clocks; a device an hour fast would
+    // otherwise win every future conflict against every other device.
+    const t = Math.min(Number(op.t) || now, now);
+    const cur = items[op.id];
+    if (cur && cur.t > t) continue; // a newer edit already won
+    if (cur && cur.c === op.c) continue; // no-op replay
+    if (!cur && op.c === false) continue; // unticking something never ticked
+    if (!cur && Object.keys(items).length >= MAX_TICKS_PER_ORDER) continue;
+
+    items[op.id] = { c: op.c, t };
+    changed++;
+  }
+
+  if (changed) {
+    state.rev++;
+    state.updated = now;
+    persistState();
+  }
+  return changed;
 }
 
 // A tick for a row that no longer exists is invisible but would come back to
 // life if the same id were ever reused, so drop it with the row.
-function purgeOrphanTicks(sections) {
+function purgeOrphanTicks(orderId, sections) {
+  const items = ticksFor(orderId);
   const live = new Set(sections.flatMap((sec) => sec.items.map((it) => it.id)));
   let dropped = 0;
-  for (const id of Object.keys(state.items)) {
+  for (const id of Object.keys(items)) {
     if (!live.has(id)) {
-      delete state.items[id];
+      delete items[id];
       dropped++;
     }
   }
   if (dropped) {
     state.rev++;
     state.updated = Date.now();
-    persist(STATE_FILE, state);
+    persistState();
   }
   return dropped;
 }
 
-/* ---------- http ---------- */
+/* ---------- http plumbing ---------- */
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -258,7 +413,7 @@ const MIME = {
   ".txt": "text/plain; charset=utf-8",
 };
 
-const staticCache = new Map(); // path -> Buffer. Files never change in an image.
+const staticCache = new Map();
 
 function send(res, status, body, headers = {}) {
   res.writeHead(status, {
@@ -270,8 +425,8 @@ function send(res, status, body, headers = {}) {
   res.end(body);
 }
 
-function sendJson(res, status, obj) {
-  send(res, status, JSON.stringify(obj), { "content-type": MIME[".json"] });
+function sendJson(res, status, obj, headers = {}) {
+  send(res, status, JSON.stringify(obj), { "content-type": MIME[".json"], ...headers });
 }
 
 function readBody(req) {
@@ -281,7 +436,7 @@ function readBody(req) {
     req.on("data", (chunk) => {
       size += chunk.length;
       if (size > MAX_BODY) {
-        reject(Object.assign(new Error("body too large"), { status: 413 }));
+        reject(new Invalid("body too large", 413));
         req.destroy();
         return;
       }
@@ -333,6 +488,40 @@ async function serveStatic(res, urlPath) {
   });
 }
 
+/* ---------- routes ---------- */
+
+function requireOrder(id) {
+  const order = orders.get(id);
+  if (!order) throw new Invalid(`no reading order "${id}"`, 404);
+  return order;
+}
+
+async function createOrder(payload) {
+  if (orders.size >= MAX_ORDERS) throw new Invalid("too many reading orders");
+
+  let doc;
+  if (payload.seed) {
+    const seeds = await listSeeds();
+    const seed = seeds.find((s) => s.id === payload.seed || slugify(s.title || s.id) === payload.seed);
+    if (!seed) throw new Invalid(`no example named "${payload.seed}"`, 404);
+    doc = seed;
+  } else if (payload.order) {
+    doc = payload.order; // an exported document, coming back in
+  } else {
+    doc = {
+      title: payload.title || "New reading order",
+      deck: "",
+      sections: [],
+    };
+  }
+
+  const id = uniqueOrderId(doc.title || payload.title || "reading-order");
+  const order = adoptOrder(id, { ...doc, updated: Date.now() }, 0);
+  await persistOrder(order);
+  console.log(`created "${order.title}" as ${id} (${countItems(order)} items)`);
+  return order;
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const path = url.pathname;
@@ -341,58 +530,118 @@ const server = createServer(async (req, res) => {
     if (path === "/healthz") {
       return sendJson(res, 200, {
         ok: true,
-        rev: state.rev,
-        items: Object.keys(state.items).length,
-        listRev: list.rev,
-        sections: list.sections.length,
+        orders: orders.size,
+        items: [...orders.values()].reduce((n, o) => n + countItems(o), 0),
+        stateRev: state.rev,
       });
     }
 
-    if (path === "/api/state") {
-      if (req.method === "GET") return sendJson(res, 200, state);
-      if (req.method === "PATCH" || req.method === "POST") {
-        const payload = await parseBody(req);
-        const ops = Array.isArray(payload.ops) ? payload.ops : null;
-        if (!ops) throw new Invalid("expected { ops: [...] }");
-        if (ops.length > MAX_OPS) return sendJson(res, 413, { error: "too many ops" });
+    if (path === "/api/seeds" && req.method === "GET") {
+      const seeds = await listSeeds();
+      return sendJson(
+        res,
+        200,
+        seeds.map((s) => ({
+          id: s.id,
+          title: s.title || s.id,
+          deck: s.deck || "",
+          sections: (s.sections || []).length,
+          items: (s.sections || []).reduce((n, sec) => n + (sec.items || []).length, 0),
+        }))
+      );
+    }
 
-        const changed = applyOps(ops);
-        // Flush before answering: the client treats a 200 as "the server owns
-        // these ops now" and drops them from its queue.
-        await writeChain;
-        console.log(`patch: ${ops.length} ops, ${changed} applied, rev ${state.rev}`);
-        return sendJson(res, 200, state);
+    if (path === "/api/orders") {
+      if (req.method === "GET") {
+        return sendJson(res, 200, [...orders.values()].map(summarise));
+      }
+      if (req.method === "POST") {
+        const order = await createOrder(await parseBody(req));
+        return sendJson(res, 201, order);
       }
       return sendJson(res, 405, { error: "method not allowed" });
     }
 
-    if (path === "/api/list") {
-      if (req.method === "GET") return sendJson(res, 200, list);
-      if (req.method === "PUT") {
-        const payload = await parseBody(req);
+    const orderMatch = path.match(/^\/api\/orders\/([a-z0-9-]{1,64})(\/export)?$/);
+    if (orderMatch) {
+      const [, id, exporting] = orderMatch;
+      const order = requireOrder(id);
 
-        // Optimistic concurrency. Without this, a phone showing yesterday's
-        // list would quietly delete every section added since.
-        if (Number(payload.rev) !== list.rev) {
-          return sendJson(res, 409, {
-            error: "the list changed elsewhere",
-            rev: list.rev,
-            updated: list.updated,
-            sections: list.sections,
+      if (req.method === "GET") {
+        if (exporting) {
+          // Everything needed to recreate this list elsewhere — deliberately
+          // without ticks, which belong to whoever is reading, not to the list.
+          const { rev, updated, ...portable } = order;
+          return sendJson(res, 200, portable, {
+            "content-disposition": `attachment; filename="${id}.json"`,
           });
         }
+        return sendJson(res, 200, order);
+      }
 
-        const sections = validateList(payload);
-        list = { rev: list.rev + 1, updated: Date.now(), sections };
-        persist(LIST_FILE, list);
-        const dropped = purgeOrphanTicks(sections);
+      if (exporting) return sendJson(res, 405, { error: "method not allowed" });
+
+      if (req.method === "PUT") {
+        const payload = await parseBody(req);
+        // Optimistic concurrency. Without this, a phone showing yesterday's
+        // list would quietly delete every section added since.
+        if (Number(payload.rev) !== order.rev) {
+          return sendJson(res, 409, { error: "the list changed elsewhere", ...order });
+        }
+        const updated = {
+          id,
+          rev: order.rev + 1,
+          updated: Date.now(),
+          ...validateMeta(payload),
+          sections: validateSections(payload.sections),
+        };
+        orders.set(id, updated);
+        persistOrder(updated);
+        const dropped = purgeOrphanTicks(id, updated.sections);
         await writeChain;
         console.log(
-          `list: rev ${list.rev}, ${sections.length} sections, ` +
-            `${sections.reduce((n, s) => n + s.items.length, 0)} items` +
-            (dropped ? `, ${dropped} orphan ticks dropped` : "")
+          `${id}: rev ${updated.rev}, ${updated.sections.length} sections, ` +
+            `${countItems(updated)} items` + (dropped ? `, ${dropped} orphan ticks dropped` : "")
         );
-        return sendJson(res, 200, list);
+        return sendJson(res, 200, updated);
+      }
+
+      if (req.method === "DELETE") {
+        if (orders.size === 1) throw new Invalid("this is the only reading order — create another first");
+        orders.delete(id);
+        delete state.orders[id];
+        state.rev++;
+        state.updated = Date.now();
+        persistState();
+        await writeChain;
+        await unlink(orderFile(id)).catch(() => {});
+        console.log(`deleted ${id}`);
+        return sendJson(res, 200, { deleted: id });
+      }
+
+      return sendJson(res, 405, { error: "method not allowed" });
+    }
+
+    const stateMatch = path.match(/^\/api\/state\/([a-z0-9-]{1,64})$/);
+    if (stateMatch) {
+      const id = stateMatch[1];
+      requireOrder(id);
+
+      if (req.method === "GET") {
+        return sendJson(res, 200, { rev: state.rev, items: ticksFor(id) });
+      }
+      if (req.method === "PATCH" || req.method === "POST") {
+        const payload = await parseBody(req);
+        const ops = Array.isArray(payload.ops) ? payload.ops : null;
+        if (!ops) throw new Invalid("expected { ops: [...] }");
+        if (ops.length > MAX_OPS) throw new Invalid("too many ops", 413);
+
+        const changed = applyOps(id, ops);
+        // Flush before answering: the client treats a 200 as "the server owns
+        // these ops now" and drops them from its queue.
+        await writeChain;
+        console.log(`${id}: ${ops.length} ops, ${changed} applied, state rev ${state.rev}`);
+        return sendJson(res, 200, { rev: state.rev, items: ticksFor(id) });
       }
       return sendJson(res, 405, { error: "method not allowed" });
     }
@@ -410,7 +659,7 @@ await mkdir(DATA_DIR, { recursive: true });
 await load();
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`secret-wars listening on :${PORT} (data: ${DATA_DIR})`);
+  console.log(`listening on :${PORT} (data: ${DATA_DIR})`);
 });
 
 for (const sig of ["SIGTERM", "SIGINT"]) {

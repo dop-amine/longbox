@@ -1,11 +1,14 @@
 # secret-wars
 
-A self-hosted reading checklist for the road to Secret Wars — Jonathan
-Hickman's *Fantastic Four* and *Avengers*, the event itself, the tie-ins worth
-reading, and everything downstream.
+A self-hosted checklist for comic reading orders. Keep several of them, tick
+issues off on any device, and edit the lists from the page itself — progress
+lives on your own server rather than in one browser's localStorage.
 
-Tick issues off on any device. Progress lives on your own server, not in a
-browser's localStorage, so the phone and the laptop agree.
+It ships with one worked example, **Road to Secret Wars** (Jonathan Hickman's
+*Fantastic Four* and *Avengers*, the event itself, the tie-ins, and everything
+downstream — 11 sections, 192 entries, each section annotated with which trade
+or omnibus collects it). Use it as-is, copy it as a starting point, or ignore
+it and build your own.
 
 <img src="public/apple-touch-icon.png" width="72" alt="">
 
@@ -17,83 +20,118 @@ plus a `public/` directory.
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/api/state` | GET | ticks: `{rev, updated, items: {<id>: {c, t}}}` |
-| `/api/state` | PATCH | apply tick ops: `{ops: [{id, c, t}]}`, returns new state |
-| `/api/list` | GET | the reading order: `{rev, updated, sections: [...]}` |
-| `/api/list` | PUT | replace the reading order, guarded by `rev` |
+| `/api/orders` | GET | the library index |
+| `/api/orders` | POST | create one: `{title}`, `{seed}` or `{order}` (import) |
+| `/api/orders/:id` | GET | one order: masthead text + sections |
+| `/api/orders/:id` | PUT | replace it, guarded by `rev` |
+| `/api/orders/:id` | DELETE | remove it and its ticks |
+| `/api/orders/:id/export` | GET | the same document, portable, without ticks |
+| `/api/state/:id` | GET | ticks for that order |
+| `/api/state/:id` | PATCH | apply tick ops: `{ops: [{id, c, t}]}` |
+| `/api/seeds` | GET | the bundled examples you can start from |
 | `/healthz` | GET | liveness, used by the container healthcheck |
 
-Two JSON documents live in `$DATA_DIR`, and the split is the central idea:
+Under `DATA_DIR`:
 
-- **`list.json`** — the reading order itself. Edited rarely and deliberately.
-- **`state.json`** — which issues are ticked. Edited constantly, from anywhere.
+- **`orders/<id>.json`** — one reading order: its masthead and its sections.
+- **`state.json`** — which issues are ticked, namespaced by order id.
 
 Both are written to a temp file and `rename`d into place, so an unclean
 shutdown leaves either the old document or the new one — never half of either.
 
-They have different concurrency models because they have different failure
-modes. Ticks merge per item, so two devices can never revert each other. List
-edits are whole-document writes guarded by a revision number: if the server has
-moved on, the write is refused with a `409` carrying the current document, and
-the page reloads rather than clobbering a change made elsewhere.
+### Two documents, two concurrency models
 
-`list.json` is seeded from `seed/list.json` (shipped in the image) the first
-time the service starts against an empty data directory.
+They fail differently, so they are handled differently.
 
-### Why ops instead of saving the whole checklist
+**Ticks** change constantly, from several devices. They travel as individual
+ops carrying a timestamp and the server merges **per item, last-write-wins**,
+so the worst a conflict can cost is the older edit of the same issue. A naive
+`PUT` of the whole tick-set would be worse than useless here: a phone that had
+the page open with a week-old view would push that view over everything ticked
+on the laptop since. Client clocks skewed into the future are clamped to server
+time, so one wrong clock can't win every future conflict.
 
-The obvious design is `PUT /api/state` with the full set of ticked issues. It
-is also wrong for the only feature that matters here. A phone with the page
-open holds a view of the world from whenever it last loaded; if it saves that
-view, it silently reverts everything ticked on the laptop in the meantime.
+Unsent ops queue in `localStorage` and retry on load, on focus, when the tab
+becomes visible, and when the browser comes back online — a tick made
+underground lands next time the page sees the network.
 
-So a tick travels as an individual op carrying a timestamp, and the server
-merges **per item, last-write-wins**. The worst a conflict can cost is the
-older edit of the same issue. Client clocks skewed into the future are clamped
-to server time, so one device with a wrong clock can't win every future
-conflict against every other device.
-
-Unsent ops are queued in `localStorage` and retried on load, on focus, when the
-tab becomes visible, and when the browser reports it is back online — so a tick
-made underground lands the next time the page sees the network. The last known
-state is mirrored locally too, so the page paints instantly instead of waiting
-on a round trip, and still shows progress when the server is unreachable.
+**Orders** change rarely and deliberately, so they are written whole under an
+optimistic `rev` guard. A stale editor gets a `409` carrying the current
+document and reloads, rather than deleting sections it never knew about. These
+edits are deliberately *not* queued offline: replaying a whole-document write
+later is exactly the stale overwrite the guard exists to prevent.
 
 ### Item ids are frozen
 
-Ticks are keyed by item id, so an id must never change. Originally they were
-derived from the entry's text (`slug(section + series + issue)`), which was
-fine while the list was hardcoded and fatal as soon as it became editable —
-renaming an issue would have silently orphaned its tick.
+Ticks are keyed by item id, so an id must never change. They were originally
+derived from the entry's text, which was fine while the list was hardcoded and
+would have been quietly destructive once it became editable — every rename
+orphaning its own tick.
 
-So `seed/list.json` pins the ids that scheme produced, and nothing recomputes
-them again. New entries get a random id (`x-` plus 8 random bytes). An id,
-once assigned, outlives every edit to the row: rename an entry freely, its
-tick follows.
+So ids are assigned once and never recomputed. New entries get a random id
+(`x-` plus 8 random bytes). Rename an entry freely; its tick follows. Deleting
+an entry deletes its tick with it, so a reused id can never inherit a dead one.
 
-Deleting an entry deletes its tick with it. That is deliberate — a tick left
-behind for a row that no longer exists would come back to life if the same id
-were ever reused.
+Ticks are namespaced per order, so two orders may reuse an id without
+colliding — which is what makes copying an example safe.
 
-## Editing the list
+## Using it
 
-*Edit list* in the bottom bar turns on edit mode. From there you can:
+The dropdown at the top left switches between reading orders. `⋯` opens the
+library menu:
+
+- **New** — an empty order, ready for sections
+- **From example** — copy a bundled seed into a new order of your own
+- **Import file** — an exported `.json` from anywhere
+- **Export** — the current order as a portable file, without ticks
+- **Delete this one** — the order and every tick on it (the last one is
+  protected, so the page always has something to show)
+
+The current order is in the URL (`/#road-to-secret-wars`), so it is
+bookmarkable and shareable.
+
+## Editing
+
+*Edit list* in the bottom bar turns on edit mode:
 
 - add, rename or delete an entry (series, issue, note, alternate tint)
-- add, retitle or delete a section, and set whether it counts toward the main
-  line or carries a flagged note
-- edit a section's **collected editions** — which trade, omnibus or complete
-  collection covers it, and the year. Kept in its own field and rendered in
-  mono under the note, because it is reference data you scan while looking for
-  the book, not prose you read
+- add, retitle or delete a section, set whether it counts toward the main line
+  or carries a flagged note
+- give a section its **collected editions** — which trade, omnibus or complete
+  collection covers it, and the year. Its own field, rendered in mono under the
+  note, because it is reference data you scan while hunting for the book
 - reorder entries within a section, and reorder sections
+- *Title & intro* edits the masthead: title, the accent word printed in red,
+  the eyebrow line, the intro paragraph, the footer tagline, and the word used
+  in the progress readout ("40% **complete**")
 
 Changes save immediately. Ticking still works while editing.
 
-Unlike ticks, list edits are **not** queued when offline: replaying a
-whole-document write later is exactly the stale overwrite the revision guard
-exists to prevent. If a save fails, the page reloads from the server and says
-so rather than pretending it worked.
+## Adding your own example
+
+Drop a JSON file in `seed/`. It is offered under *From example* and installed
+automatically into an empty data directory — no code change. The shape is what
+`/api/orders/:id/export` produces:
+
+```json
+{
+  "title": "Some Reading Order",
+  "titleAccent": "Order",
+  "eyebrow": "small line above the title",
+  "deck": "the intro paragraph",
+  "tagline": "footer text",
+  "progressWord": "complete",
+  "sections": [
+    {
+      "id": "s-000", "n": "000", "title": "First Section",
+      "core": true, "flag": false, "note": "", "collected": "",
+      "items": [{ "id": "x-1", "s": "Some Comic", "i": "#1-5", "note": "", "alt": false }]
+    }
+  ]
+}
+```
+
+Ids only need to be unique within the file, and must match `[a-z0-9-]{1,120}`.
 
 ## Running it
 
@@ -104,55 +142,61 @@ DATA_DIR=./data PORT=8087 node server.mjs      # http://localhost:8087
 Or with Docker:
 
 ```bash
-docker build -t secret-wars .
-docker run -d --name secret-wars \
+docker build -t reading-order .
+docker run -d --name reading-order \
   -p 127.0.0.1:8087:8080 \
-  -v /srv/secret-wars:/data \
-  secret-wars
+  -v /srv/reading-order:/data \
+  reading-order
 ```
 
-**There is no authentication, by design.** It is a comics reading list, and the
-gate is the network: bind the container to loopback and put it behind whatever
-reverse proxy already fronts your other services. Don't expose it to the
-internet without adding a gate first — anyone who can reach it can rewrite your
-progress.
+An empty data directory installs the bundled examples, so a fresh clone is
+never blank. A data directory from the single-list version of this app is
+migrated in place on first boot, keeping the original as `list.json.migrated`.
+
+**There is no authentication, by design.** These are comic reading lists, and
+the gate is the network: bind the container to loopback and put it behind
+whatever reverse proxy already fronts your other services. Don't expose it to
+the internet without adding a gate — anyone who can reach it can rewrite every
+list.
 
 ## Development
 
 ```bash
+node test/page.test.mjs      #  6 assertions — script/markup agreement
 node test/sync.test.mjs      # 10 assertions — ticks and merge rules
-node test/list.test.mjs      # 14 assertions — editing, validation, concurrency
+node test/orders.test.mjs    # 20 assertions — library, editing, migration
 node --check server.mjs
 python3 scripts/make-icon.py # regenerate the iOS home-screen icon (stdlib only)
 ```
 
-No framework and no dependencies: both suites spawn the real server against a
-temp directory and talk to it over HTTP.
+No framework and no dependencies. The two API suites spawn the real server
+against a temp directory and talk to it over HTTP; `orders.test.mjs` also
+builds a legacy single-list data directory and asserts it migrates.
 
-`sync.test.mjs` covers the merge rules the multi-device story rests on — stale
-ops losing to newer ones, future timestamps clamped, malformed ops ignored
-rather than fatal, state surviving a restart.
+`page.test.mjs` is static, and exists because the API suites never open the
+page: it checks that every id the script looks up is defined in the markup,
+that no user text reaches `innerHTML`, and that no single reading order is
+hardcoded into the page any more.
 
-`list.test.mjs` covers editing: seeding from the shipped seed, revision
-conflicts refusing a stale write, validation (duplicate ids, missing series,
-over-long fields), orphan ticks purged on delete, and the invariant the whole
-id-freezing design exists to protect — **renaming an entry keeps its tick**.
-
-CI runs those on every push and publishes a container image on merge to `main`.
+CI runs all three, then **builds the image, starts it, and requires it to
+answer `/healthz` with a seeded library and serve the page** before publishing.
+That gate exists because the unit tests all pass against the source tree, so
+they cannot see a file the Dockerfile forgot to copy — which shipped once as a
+crash-looping container.
 
 ## Known limits
 
-- Fonts are loaded from Google Fonts, so a device with no internet falls back
-  to the local stack (Impact / system sans-serif / Menlo). Vendoring them into
-  `public/` would make it fully self-contained.
+- Fonts load from Google Fonts, so a device with no internet falls back to the
+  local stack. Vendoring them into `public/` would make it self-contained.
 - No service worker: an interrupted session is handled, but opening the page
   cold with no route to the server shows nothing.
-- Single-user. There are no accounts, so everyone who can reach it shares one
-  checklist.
+- Single-user. There are no accounts, so everyone who can reach it shares the
+  same library and the same ticks.
 
 ## Credits
 
-The reading order is a curated list — sections, issue ordering, and the notes
-on what is optional are editorial calls, collected in `public/index.html` as a
-plain `DATA` array so they're easy to amend. Comics and their titles are the
-property of Marvel; nothing here reproduces any of it.
+Reading orders are editorial: what to include, in what order, and what is
+optional are judgement calls. The bundled example's list and notes are one such
+take, stored as plain JSON so it is easy to disagree with. Comics and their
+titles are the property of their publishers; nothing here reproduces any of
+them.

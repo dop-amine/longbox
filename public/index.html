@@ -7,8 +7,8 @@
 <meta name="theme-color" content="#0D0D0F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Secret Wars">
-<title>Road to Secret Wars — Reading Checklist</title>
+<meta name="apple-mobile-web-app-title" content="Reading Order">
+<title>Reading Order</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -42,8 +42,36 @@
   }
   .wrap{max-width:820px;margin:0 auto;padding:0 18px}
 
+  /* ---------- library bar (which reading order) ---------- */
+  .library{
+    display:flex;align-items:center;gap:8px;padding:14px 0 0;
+  }
+  .library select{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--card);color:var(--ink);border:1px solid var(--hair);
+    padding:7px 10px;max-width:min(60vw,340px);cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+    background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px;
+  }
+  .library select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .libmenu{
+    display:none;margin:10px 0 0;border:1px solid var(--hair);background:var(--card);padding:12px;
+  }
+  .libmenu.open{display:block}
+  .libmenu h3{
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--red);margin:0 0 8px;font-weight:600;
+  }
+  .libmenu .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .libmenu .row:last-child{margin-bottom:0}
+  .libmenu p.muted{
+    font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin:0 0 8px;line-height:1.5;
+  }
+
   /* ---------- masthead ---------- */
-  header.mast{padding:34px 0 22px;border-bottom:3px solid var(--ink)}
+  header.mast{padding:20px 0 22px;border-bottom:3px solid var(--ink)}
   .eyebrow{
     font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--ink-soft);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
@@ -58,8 +86,10 @@
   .deck{
     margin:14px 0 0;max-width:46ch;font-size:15px;color:var(--ink-soft);
   }
+  .mast-tools{display:none;gap:6px;margin:14px 0 0}
+  body.editing .mast-tools{display:flex}
 
-  /* ---------- incursion meter (signature) ---------- */
+  /* ---------- progress meter ---------- */
   .meter{
     margin:26px 0 0;padding:20px;background:var(--card);
     border:1px solid var(--hair);
@@ -138,8 +168,6 @@
   }
   input:checked ~ .title,input:checked ~ .issue{color:var(--ink-soft)}
   input:checked ~ .title{text-decoration:line-through;text-decoration-thickness:1px}
-
-  /* alternating title tint inside Time Runs Out */
   li.row.alt .title{color:var(--blue)}
   li.row.alt input:checked ~ .title{color:var(--ink-soft)}
 
@@ -158,6 +186,7 @@
   .adder button{width:100%;border-style:dashed}
 
   .form{flex:1;padding:14px 6px;display:grid;gap:10px}
+  .form.meta{padding:16px 0 4px}
   .form .field{display:grid;gap:4px}
   .form label.lbl{
     font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
@@ -220,13 +249,37 @@
 <body style="background:#0D0D0F;color:#F2F1EB">
 
 <div class="wrap">
+  <div class="library">
+    <select id="orderSelect" aria-label="Reading order"></select>
+    <button id="libBtn" type="button" aria-expanded="false" title="Manage reading orders">&#8943;</button>
+  </div>
+
+  <div class="libmenu" id="libMenu">
+    <h3>Reading orders</h3>
+    <p class="muted" id="libSummary"></p>
+    <div class="row">
+      <button id="newBtn" type="button">+ New</button>
+      <button id="exampleBtn" type="button">From example</button>
+      <button id="importBtn" type="button">Import file</button>
+      <button id="exportBtn" type="button">Export</button>
+      <button id="deleteOrderBtn" type="button">Delete this one</button>
+    </div>
+    <div class="row" id="seedRow"></div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+
   <header class="mast">
     <div class="eyebrow">
-      <span>Hickman&rsquo;s Avengers &rarr; Secret Wars &rarr; everything after</span>
+      <span id="eyebrow"></span>
       <span><b id="sectionRange">&nbsp;</b></span>
     </div>
-    <h1>Road to<span class="thin" style="color:#F03A41">Secret Wars</span></h1>
-    <p class="deck">The full run in reading order, issue by issue. Tick as you go &mdash; progress syncs across every device. Use <em>Edit list</em> in the bar below to add, change or remove entries.</p>
+    <h1 id="mastTitle"></h1>
+    <p class="deck" id="deck"></p>
+
+    <div class="mast-tools">
+      <button class="tool" id="editMetaBtn" type="button">&#9998; Title &amp; intro</button>
+    </div>
+    <div id="metaFormHost"></div>
 
     <div class="meter" style="background:#17171B;color:#F2F1EB">
       <svg class="diagram" viewBox="0 0 130 96" aria-hidden="true">
@@ -235,12 +288,12 @@
       </svg>
       <div class="readout">
         <div class="big" id="count">0<span> / 0</span></div>
-        <div class="lbl" id="pctLabel">0% convergence &middot; main line</div>
+        <div class="lbl" id="pctLabel">&nbsp;</div>
         <div class="bar"><i id="barFill"></i></div>
       </div>
     </div>
 
-    <p class="hint">Editing. Ticks still work; changes to the list save immediately. Deleting an entry also deletes its tick.</p>
+    <p class="hint">Editing. Ticks still work; changes save immediately. Deleting an entry also deletes its tick.</p>
   </header>
 
   <main id="sections"></main>
@@ -250,8 +303,8 @@
   </div>
 
   <footer class="colophon">
-    <span>Order as supplied &mdash; yours to amend</span>
-    <span>Checklist &middot; 616 &times; 1610</span>
+    <span>Yours to amend</span>
+    <span id="tagline"></span>
   </footer>
 </div>
 
@@ -266,47 +319,46 @@
 
 <script>
 /* ---------------------------------------------------------------------------
-   Two documents, two concurrency models — see the header of server.mjs.
+   Several reading orders, one page.
 
-     ticks  (/api/state)  change constantly, from any device. They travel as
-                          per-item ops with timestamps and merge last-write-wins,
-                          so two devices can never revert each other. Unsent ops
-                          queue in localStorage and retry when the network is back.
+     /api/orders            the library index
+     /api/orders/:id        one order: masthead text + sections (PUT is guarded
+                            by rev — a stale editor is refused, not merged)
+     /api/state/:id         ticks for that order, as per-item ops merged
+                            last-write-wins so no device can revert another
+     /api/seeds             bundled examples you can start a new order from
 
-     list   (/api/list)   changes rarely and deliberately. It is written whole,
-                          guarded by a revision number: if the server has moved
-                          on, the write is refused and we reload rather than
-                          clobber an edit made elsewhere.
-
-   Item ids are FROZEN and never derived from the text, which is what lets you
-   rename an entry without losing its tick.
+   Ticks are namespaced per order, so two orders can reuse an item id without
+   colliding. Item ids are frozen and never derived from the text, which is
+   what lets you rename an entry without losing its tick.
 --------------------------------------------------------------------------- */
 
-const API_STATE = "/api/state";
-const API_LIST = "/api/list";
-const MIRROR_KEY = "rtsw:mirror:v1";
-const PENDING_KEY = "rtsw:pending:v1";
-const LIST_KEY = "rtsw:list:v1";
+const CURRENT_KEY = "rtsw:current";
+const keyList = (id) => "rtsw:list:" + id;
+const keyMirror = (id) => "rtsw:mirror:" + id;
+const keyPending = (id) => "rtsw:pending:" + id;
 const POLL_MS = 60000;
 
-let list = { rev: 0, sections: [] };
-let items = {};        // id -> {c,t}  — last known tick truth
-let pending = [];      // tick ops not yet accepted by the server
+let library = [];      // [{id, title, sections, items, ...}]
+let orderId = null;
+let order = { rev: 0, sections: [] };
+let items = {};        // id -> {c,t}
+let pending = [];      // tick ops not yet accepted
 let syncing = false;
 let dirty = false;
 let syncTimer = null;
 let editing = false;
-let editTarget = null; // {kind:"item"|"section", id} currently open in a form
+let editTarget = null; // {kind:"item"|"section"|"meta", id}
 
 const host = document.getElementById("sections");
 const stateEl = document.getElementById("saveState");
 
-/* ---------- small helpers ---------- */
+/* ---------- helpers ---------- */
 
 function el(tag, cls, text){
   const node = document.createElement(tag);
   if (cls) node.className = cls;
-  // textContent, never innerHTML: every string below is user-editable now.
+  // textContent, never innerHTML: all of this is user-editable text.
   if (text != null) node.textContent = text;
   return node;
 }
@@ -345,12 +397,47 @@ function statusIdle(){
   else status("Synced");
 }
 
-/* ---------- rendering ---------- */
+async function api(path, options){
+  const res = await fetch(path, options);
+  if (!res.ok) {
+    let message = "HTTP " + res.status;
+    try { const body = await res.json(); if (body.error) message = body.error; } catch {}
+    const err = new Error(message);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
 
-function itemForm(sec, it){
-  const form = el("div", "form");
+/* ---------- masthead ---------- */
+
+function renderMasthead(){
+  document.getElementById("eyebrow").textContent = order.eyebrow || "";
+  document.getElementById("deck").textContent = order.deck || "";
+  document.getElementById("tagline").textContent = order.tagline || "";
+
+  const h1 = document.getElementById("mastTitle");
+  h1.textContent = "";
+  const title = order.title || "Reading order";
+  const accent = (order.titleAccent || "").trim();
+  // The accent is normally the tail of the title ("Road to | Secret Wars"),
+  // so split it off rather than printing it twice.
+  const lead =
+    accent && title.toLowerCase().endsWith(accent.toLowerCase())
+      ? title.slice(0, title.length - accent.length).trim()
+      : title;
+  h1.appendChild(document.createTextNode(lead));
+  if (accent) {
+    const span = el("span", "thin", accent);
+    span.style.color = "#F03A41";
+    h1.appendChild(span);
+  }
+  document.title = title;
+}
+
+function metaForm(){
+  const form = el("div", "form meta");
   const fields = {};
-
   const field = (key, label, value) => {
     const wrap = el("div", "field");
     const lbl = el("label", "lbl", label);
@@ -363,18 +450,79 @@ function itemForm(sec, it){
     return wrap;
   };
 
-  form.appendChild(field("s", "Series", it.s));
-  form.appendChild(field("i", "Issue", it.i));
-  form.appendChild(field("note", "Note", it.note));
+  form.appendChild(field("title", "Title", order.title));
+  form.appendChild(field("titleAccent", "Accent (the part in red, usually the end of the title)", order.titleAccent));
+  form.appendChild(field("eyebrow", "Eyebrow (small line above the title)", order.eyebrow));
+  form.appendChild(field("deck", "Intro paragraph", order.deck));
+  form.appendChild(field("tagline", "Footer tagline", order.tagline));
+  form.appendChild(field("progressWord", "Progress word (“40% complete”)", order.progressWord));
 
+  const actions = el("div", "actions");
+  const save = el("button", "tool", "Save");
+  save.type = "button";
+  save.addEventListener("click", () => {
+    if (!fields.title.value.trim()) { fields.title.focus(); return; }
+    order.title = fields.title.value;
+    order.titleAccent = fields.titleAccent.value;
+    order.eyebrow = fields.eyebrow.value;
+    order.deck = fields.deck.value;
+    order.tagline = fields.tagline.value;
+    order.progressWord = fields.progressWord.value;
+    editTarget = null;
+    commitOrder();
+  });
+  const cancel = el("button", "tool", "Cancel");
+  cancel.type = "button";
+  cancel.addEventListener("click", () => {
+    editTarget = null;
+    loadOrder().then(renderAll);
+  });
+  actions.appendChild(save);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+
+  setTimeout(() => fields.title.focus(), 0);
+  return form;
+}
+
+/* ---------- section + item forms ---------- */
+
+function buildFields(form, spec){
+  const fields = {};
+  for (const [key, label, value] of spec) {
+    const wrap = el("div", "field");
+    const lbl = el("label", "lbl", label);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = value || "";
+    lbl.appendChild(input);
+    wrap.appendChild(lbl);
+    form.appendChild(wrap);
+    fields[key] = input;
+  }
+  return fields;
+}
+
+function checkbox(parent, label, checked){
+  const wrap = el("label", "check");
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.checked = !!checked;
+  wrap.appendChild(input);
+  wrap.appendChild(el("span", null, label));
+  parent.appendChild(wrap);
+  return input;
+}
+
+function itemForm(sec, it){
+  const form = el("div", "form");
+  const fields = buildFields(form, [
+    ["s", "Series", it.s],
+    ["i", "Issue", it.i],
+    ["note", "Note", it.note],
+  ]);
   const checks = el("div", "checks");
-  const altLabel = el("label", "check");
-  const alt = document.createElement("input");
-  alt.type = "checkbox";
-  alt.checked = !!it.alt;
-  altLabel.appendChild(alt);
-  altLabel.appendChild(el("span", null, "Alternate tint"));
-  checks.appendChild(altLabel);
+  const alt = checkbox(checks, "Alternate tint", it.alt);
   form.appendChild(checks);
 
   const actions = el("div", "actions");
@@ -387,14 +535,14 @@ function itemForm(sec, it){
     it.note = fields.note.value;
     it.alt = alt.checked;
     editTarget = null;
-    commitList();
+    commitOrder();
   });
   const cancel = el("button", "tool", "Cancel");
   cancel.type = "button";
   cancel.addEventListener("click", () => {
     editTarget = null;
-    // The row may be a brand-new blank entry; reload drops it cleanly.
-    loadList().then(renderAll);
+    // The row may be a brand-new blank entry; reloading drops it cleanly.
+    loadOrder().then(renderAll);
   });
   const del = el("button", "tool danger", "Delete");
   del.type = "button";
@@ -403,7 +551,7 @@ function itemForm(sec, it){
     sec.items = sec.items.filter(x => x.id !== it.id);
     delete items[it.id];
     editTarget = null;
-    commitList();
+    commitOrder();
   });
 
   actions.appendChild(save);
@@ -418,40 +566,15 @@ function itemForm(sec, it){
 
 function sectionForm(sec){
   const form = el("div", "form");
-  const fields = {};
-
-  const field = (key, label, value) => {
-    const wrap = el("div", "field");
-    const lbl = el("label", "lbl", label);
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = value || "";
-    lbl.appendChild(input);
-    wrap.appendChild(lbl);
-    fields[key] = input;
-    return wrap;
-  };
-
-  form.appendChild(field("n", "Number", sec.n));
-  form.appendChild(field("title", "Title", sec.title));
-  form.appendChild(field("note", "Note", sec.note));
-  form.appendChild(field("collected", "Collected editions", sec.collected));
-
+  const fields = buildFields(form, [
+    ["n", "Number", sec.n],
+    ["title", "Title", sec.title],
+    ["note", "Note", sec.note],
+    ["collected", "Collected editions", sec.collected],
+  ]);
   const checks = el("div", "checks");
-  const coreLabel = el("label", "check");
-  const core = document.createElement("input");
-  core.type = "checkbox";
-  core.checked = !!sec.core;
-  coreLabel.appendChild(core);
-  coreLabel.appendChild(el("span", null, "Counts toward main line"));
-  const flagLabel = el("label", "check");
-  const flag = document.createElement("input");
-  flag.type = "checkbox";
-  flag.checked = !!sec.flag;
-  flagLabel.appendChild(flag);
-  flagLabel.appendChild(el("span", null, "Flagged note"));
-  checks.appendChild(coreLabel);
-  checks.appendChild(flagLabel);
+  const core = checkbox(checks, "Counts toward main line", sec.core);
+  const flag = checkbox(checks, "Flagged note", sec.flag);
   form.appendChild(checks);
 
   const actions = el("div", "actions");
@@ -466,13 +589,13 @@ function sectionForm(sec){
     sec.core = core.checked;
     sec.flag = flag.checked;
     editTarget = null;
-    commitList();
+    commitOrder();
   });
   const cancel = el("button", "tool", "Cancel");
   cancel.type = "button";
   cancel.addEventListener("click", () => {
     editTarget = null;
-    loadList().then(renderAll);
+    loadOrder().then(renderAll);
   });
   const del = el("button", "tool danger", "Delete section");
   del.type = "button";
@@ -480,9 +603,9 @@ function sectionForm(sec){
     const n = sec.items.length;
     if (!confirm("Delete “" + sec.title + "”" + (n ? " and its " + n + " entries" : "") + "?")) return;
     sec.items.forEach(it => { delete items[it.id]; });
-    list.sections = list.sections.filter(s => s.id !== sec.id);
+    order.sections = order.sections.filter(s => s.id !== sec.id);
     editTarget = null;
-    commitList();
+    commitOrder();
   });
 
   actions.appendChild(save);
@@ -494,6 +617,8 @@ function sectionForm(sec){
   setTimeout(() => fields.title.focus(), 0);
   return form;
 }
+
+/* ---------- rendering ---------- */
 
 function move(arr, index, delta){
   const next = index + delta;
@@ -515,7 +640,6 @@ function itemRow(sec, it, si, ii){
   const box = document.createElement("input");
   box.type = "checkbox";
   box.dataset.id = it.id;
-  box.dataset.sec = String(si);
   box.checked = !!(items[it.id] && items[it.id].c);
   label.appendChild(box);
   label.appendChild(el("span", "box"));
@@ -527,18 +651,13 @@ function itemRow(sec, it, si, ii){
   li.appendChild(label);
 
   const tools = el("div", "tools");
-  tools.appendChild(tool("↑", "Move up", () => {
-    if (move(sec.items, ii, -1)) commitList();
-  }));
-  tools.appendChild(tool("↓", "Move down", () => {
-    if (move(sec.items, ii, 1)) commitList();
-  }));
+  tools.appendChild(tool("↑", "Move up", () => { if (move(sec.items, ii, -1)) commitOrder(); }));
+  tools.appendChild(tool("↓", "Move down", () => { if (move(sec.items, ii, 1)) commitOrder(); }));
   tools.appendChild(tool("✎", "Edit entry", () => {
     editTarget = { kind: "item", id: it.id };
     renderAll();
   }));
   li.appendChild(tools);
-
   return li;
 }
 
@@ -547,19 +666,14 @@ function sectionBlock(sec, si){
 
   const head = el("div", "blk-head");
   head.appendChild(el("span", "num", sec.n));
-  const h2 = el("h2", null, sec.title);
-  head.appendChild(h2);
+  head.appendChild(el("h2", null, sec.title));
   const tally = el("span", "tally");
   tally.dataset.tally = String(si);
   head.appendChild(tally);
 
   const headTools = el("div", "tools");
-  headTools.appendChild(tool("↑", "Move section up", () => {
-    if (move(list.sections, si, -1)) commitList();
-  }));
-  headTools.appendChild(tool("↓", "Move section down", () => {
-    if (move(list.sections, si, 1)) commitList();
-  }));
+  headTools.appendChild(tool("↑", "Move section up", () => { if (move(order.sections, si, -1)) commitOrder(); }));
+  headTools.appendChild(tool("↓", "Move section down", () => { if (move(order.sections, si, 1)) commitOrder(); }));
   headTools.appendChild(tool("✎", "Edit section", () => {
     editTarget = { kind: "section", id: sec.id };
     renderAll();
@@ -599,17 +713,21 @@ function sectionBlock(sec, si){
 }
 
 function renderAll(){
+  renderMasthead();
+
+  const metaHost = document.getElementById("metaFormHost");
+  metaHost.textContent = "";
+  if (editTarget && editTarget.kind === "meta") metaHost.appendChild(metaForm());
+
   host.textContent = "";
-  list.sections.forEach((sec, si) => host.appendChild(sectionBlock(sec, si)));
+  (order.sections || []).forEach((sec, si) => host.appendChild(sectionBlock(sec, si)));
   paint();
 }
-
-/* ---------- progress ---------- */
 
 function paint(){
   let coreDone = 0, coreTotal = 0, optDone = 0, optTotal = 0;
 
-  list.sections.forEach((sec, si) => {
+  (order.sections || []).forEach((sec, si) => {
     let done = 0;
     sec.items.forEach(it => {
       const ticked = !!(items[it.id] && items[it.id].c);
@@ -626,48 +744,86 @@ function paint(){
 
   const pct = coreTotal ? coreDone / coreTotal : 0;
   document.getElementById("count").innerHTML = coreDone + "<span> / " + coreTotal + "</span>";
-  document.getElementById("pctLabel").textContent = Math.round(pct * 100) + "% convergence · main line";
+  document.getElementById("pctLabel").textContent =
+    Math.round(pct * 100) + "% " + (order.progressWord || "complete") + " · main line";
   document.getElementById("barFill").style.width = (pct * 100) + "%";
   document.getElementById("dockMain").textContent = coreDone + "/" + coreTotal;
   document.getElementById("dockOpt").textContent = optDone + "/" + optTotal;
   document.getElementById("c616").setAttribute("transform", "translate(" + (23 * pct) + ",0)");
   document.getElementById("c1610").setAttribute("transform", "translate(" + (-23 * pct) + ",0)");
 
-  const numbers = list.sections.map(s => s.n).filter(Boolean);
+  const numbers = (order.sections || []).map(s => s.n).filter(Boolean);
   document.getElementById("sectionRange").textContent =
-    numbers.length ? "Sections " + numbers[0] + "–" + numbers[numbers.length - 1] : "";
+    numbers.length > 1 ? "Sections " + numbers[0] + "–" + numbers[numbers.length - 1] : "";
 }
 
-/* ---------- list sync ---------- */
+/* ---------- the library ---------- */
 
-async function loadList(){
+function renderLibrary(){
+  const select = document.getElementById("orderSelect");
+  select.textContent = "";
+  library.forEach(entry => {
+    const opt = document.createElement("option");
+    opt.value = entry.id;
+    opt.textContent = entry.title + "  (" + entry.items + ")";
+    opt.selected = entry.id === orderId;
+    select.appendChild(opt);
+  });
+  const current = library.find(e => e.id === orderId);
+  document.getElementById("libSummary").textContent = current
+    ? library.length + (library.length === 1 ? " order. " : " orders. ") +
+      "Showing " + current.title + " — " + current.sections + " sections, " + current.items + " entries."
+    : library.length + " orders.";
+}
+
+async function loadLibrary(){
+  library = await api("/api/orders");
+  renderLibrary();
+}
+
+async function switchOrder(id){
+  if (!id || id === orderId) return;
+  if (pending.length) await sync();           // don't strand ticks on the old order
+  orderId = id;
+  lsSet(CURRENT_KEY, id);
+  if (location.hash.slice(1) !== id) location.hash = id;
+  editTarget = null;
+  order = lsGet(keyList(id), { rev: 0, sections: [] });
+  items = lsGet(keyMirror(id), {});
+  pending = lsGet(keyPending(id), []);
+  renderAll();
+  renderLibrary();
+  await loadOrder();
+  renderAll();
+  await sync();
+}
+
+/* ---------- order document ---------- */
+
+async function loadOrder(){
   try {
-    const res = await fetch(API_LIST, { headers: { accept: "application/json" } });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const doc = await res.json();
-    list = { rev: doc.rev, sections: doc.sections };
-    lsSet(LIST_KEY, list);
+    order = await api("/api/orders/" + orderId);
+    lsSet(keyList(orderId), order);
     return true;
   } catch {
     return false; // the mirror already on screen stays valid
   }
 }
 
-// Writes the whole list, guarded by rev. A 409 means someone else moved first.
-async function commitList(){
+// Writes the whole order, guarded by rev. A 409 means someone else moved first.
+async function commitOrder(){
   renderAll();
-  status("Saving list");
+  status("Saving");
   try {
-    const res = await fetch(API_LIST, {
+    const res = await fetch("/api/orders/" + orderId, {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ rev: list.rev, sections: list.sections })
+      body: JSON.stringify(order)
     });
 
     if (res.status === 409) {
-      const doc = await res.json();
-      list = { rev: doc.rev, sections: doc.sections };
-      lsSet(LIST_KEY, list);
+      order = await res.json();
+      lsSet(keyList(orderId), order);
       editTarget = null;
       renderAll();
       status("List changed elsewhere — reloaded", true);
@@ -677,26 +833,26 @@ async function commitList(){
       let message = "Not saved";
       try { const body = await res.json(); if (body.error) message = "Not saved: " + body.error; } catch {}
       status(message, true);
-      await loadList();
+      await loadOrder();
       renderAll();
       return;
     }
 
-    const doc = await res.json();
-    list = { rev: doc.rev, sections: doc.sections };
-    lsSet(LIST_KEY, list);
+    order = await res.json();
+    lsSet(keyList(orderId), order);
     renderAll();
+    await loadLibrary();
     statusIdle();
   } catch {
-    // Unlike ticks, list edits are not queued: replaying a whole-document write
-    // later would be exactly the stale-overwrite this design refuses.
-    status("Offline — list not saved", true);
-    await loadList();
+    // Unlike ticks, order edits are not queued: replaying a whole-document
+    // write later is exactly the stale overwrite the rev guard prevents.
+    status("Offline — not saved", true);
+    await loadOrder();
     renderAll();
   }
 }
 
-/* ---------- tick sync ---------- */
+/* ---------- ticks ---------- */
 
 function mergeInto(base, ops){
   for (const op of ops){
@@ -707,31 +863,32 @@ function mergeInto(base, ops){
 }
 
 async function sync(){
+  if (!orderId) return;
   if (syncing) { dirty = true; return; }
   syncing = true;
   const flushing = pending.slice();
+  const id = orderId;
 
   try {
     status(flushing.length ? "Saving" : "Syncing");
-    const res = flushing.length
-      ? await fetch(API_STATE, {
+    const server = flushing.length
+      ? await api("/api/state/" + id, {
           method: "PATCH",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ ops: flushing })
         })
-      : await fetch(API_STATE, { headers: { accept: "application/json" } });
+      : await api("/api/state/" + id);
 
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const server = await res.json();
+    if (id !== orderId) return; // switched orders mid-flight
 
-    // The server owns exactly what we sent; anything ticked mid-flight stays queued.
+    // The server owns exactly what we sent; anything ticked meanwhile stays queued.
     if (flushing.length) {
       pending = pending.slice(flushing.length);
-      lsSet(PENDING_KEY, pending);
+      lsSet(keyPending(id), pending);
     }
 
     items = mergeInto(Object.assign({}, server.items || {}), pending);
-    lsSet(MIRROR_KEY, items);
+    lsSet(keyMirror(id), items);
     refreshBoxes();
     paint();
     statusIdle();
@@ -758,8 +915,8 @@ function record(id, checked){
   const op = { id: id, c: checked, t: Date.now() };
   items[id] = { c: op.c, t: op.t };
   pending.push(op);
-  lsSet(PENDING_KEY, pending);
-  lsSet(MIRROR_KEY, items);
+  lsSet(keyPending(orderId), pending);
+  lsSet(keyMirror(orderId), items);
 }
 
 /* ---------- events ---------- */
@@ -773,6 +930,114 @@ document.addEventListener("change", e => {
   scheduleSync();
 });
 
+document.getElementById("orderSelect").addEventListener("change", e => switchOrder(e.target.value));
+
+window.addEventListener("hashchange", () => {
+  const id = location.hash.slice(1);
+  if (id && id !== orderId && library.some(e => e.id === id)) switchOrder(id);
+});
+
+document.getElementById("libBtn").addEventListener("click", e => {
+  const menu = document.getElementById("libMenu");
+  const open = menu.classList.toggle("open");
+  e.currentTarget.setAttribute("aria-expanded", String(open));
+  if (!open) document.getElementById("seedRow").textContent = "";
+});
+
+document.getElementById("newBtn").addEventListener("click", async () => {
+  const title = prompt("Name the new reading order");
+  if (!title || !title.trim()) return;
+  try {
+    const created = await api("/api/orders", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: title.trim() })
+    });
+    await loadLibrary();
+    await switchOrder(created.id);
+    status("Created — add a section to start");
+  } catch (err) {
+    status("Not created: " + err.message, true);
+  }
+});
+
+document.getElementById("exampleBtn").addEventListener("click", async () => {
+  const row = document.getElementById("seedRow");
+  row.textContent = "";
+  try {
+    const seeds = await api("/api/seeds");
+    if (!seeds.length) { row.appendChild(el("p", "muted", "No examples are bundled.")); return; }
+    row.appendChild(el("p", "muted", "Start a new order from a bundled example:"));
+    seeds.forEach(seed => {
+      const b = el("button", null, seed.title + " (" + seed.items + ")");
+      b.type = "button";
+      b.addEventListener("click", async () => {
+        try {
+          const created = await api("/api/orders", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ seed: seed.id })
+          });
+          await loadLibrary();
+          await switchOrder(created.id);
+          status("Copied " + seed.title);
+        } catch (err) {
+          status("Not created: " + err.message, true);
+        }
+      });
+      row.appendChild(b);
+    });
+  } catch (err) {
+    row.appendChild(el("p", "muted", "Could not load examples: " + err.message));
+  }
+});
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+
+document.getElementById("importFile").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  try {
+    const doc = JSON.parse(await file.text());
+    const created = await api("/api/orders", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ order: doc })
+    });
+    await loadLibrary();
+    await switchOrder(created.id);
+    status("Imported " + created.title);
+  } catch (err) {
+    status("Import failed: " + err.message, true);
+  }
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  window.location.href = "/api/orders/" + orderId + "/export";
+});
+
+document.getElementById("deleteOrderBtn").addEventListener("click", async () => {
+  const current = library.find(e => e.id === orderId);
+  if (!current) return;
+  if (!confirm("Delete “" + current.title + "”, its " + current.items + " entries and every tick on it?")) return;
+  try {
+    await api("/api/orders/" + orderId, { method: "DELETE" });
+    [keyList(orderId), keyMirror(orderId), keyPending(orderId)].forEach(k => {
+      try { localStorage.removeItem(k); } catch {}
+    });
+    const gone = orderId;
+    orderId = null;
+    await loadLibrary();
+    await switchOrder((library.find(e => e.id !== gone) || library[0]).id);
+    status("Deleted");
+  } catch (err) {
+    status("Not deleted: " + err.message, true);
+  }
+});
+
 document.getElementById("editBtn").addEventListener("click", e => {
   editing = !editing;
   editTarget = null;
@@ -782,17 +1047,22 @@ document.getElementById("editBtn").addEventListener("click", e => {
   renderAll();
 });
 
+document.getElementById("editMetaBtn").addEventListener("click", () => {
+  editTarget = editTarget && editTarget.kind === "meta" ? null : { kind: "meta" };
+  renderAll();
+});
+
 document.getElementById("addSectionBtn").addEventListener("click", () => {
-  const sec = { id: newId(), n: "", title: "New section", core: true, flag: false, note: "", items: [] };
-  list.sections.push(sec);
+  const sec = { id: newId(), n: "", title: "New section", core: true, flag: false, note: "", collected: "", items: [] };
+  order.sections.push(sec);
   editTarget = { kind: "section", id: sec.id };
-  commitList();
+  commitOrder();
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
   const ticked = host.querySelectorAll('input[type="checkbox"][data-id]:checked');
   if (!ticked.length) return;
-  if (!confirm("Clear all " + ticked.length + " ticks on every device?")) return;
+  if (!confirm("Clear all " + ticked.length + " ticks on this order, on every device?")) return;
   ticked.forEach(b => { b.checked = false; record(b.dataset.id, false); });
   paint();
   scheduleSync();
@@ -801,8 +1071,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;
   sync();
-  // Don't yank the list out from under an open form.
-  if (!editTarget) loadList().then(ok => { if (ok) renderAll(); });
+  if (!editTarget) loadOrder().then(ok => { if (ok) renderAll(); });
 });
 window.addEventListener("online", sync);
 window.addEventListener("focus", sync);
@@ -810,13 +1079,40 @@ setInterval(() => { if (!document.hidden) sync(); }, POLL_MS);
 
 /* ---------- boot ---------- */
 
-list = lsGet(LIST_KEY, { rev: 0, sections: [] });
-items = lsGet(MIRROR_KEY, {});
-pending = lsGet(PENDING_KEY, []);
-renderAll();
-statusIdle();
+(async function boot(){
+  // Paint from the mirror first so a cold start shows something immediately,
+  // then reconcile with the server.
+  const remembered = location.hash.slice(1) || lsGet(CURRENT_KEY, null);
+  if (remembered) {
+    orderId = remembered;
+    order = lsGet(keyList(remembered), { rev: 0, sections: [] });
+    items = lsGet(keyMirror(remembered), {});
+    pending = lsGet(keyPending(remembered), []);
+    renderAll();
+    statusIdle();
+  }
 
-loadList().then(() => { renderAll(); sync(); });
+  try {
+    await loadLibrary();
+  } catch {
+    status("Offline", true);
+    return;
+  }
+  if (!library.length) { status("No reading orders"); return; }
+
+  const wanted = library.find(e => e.id === orderId) ? orderId : library[0].id;
+  if (wanted !== orderId) {
+    orderId = null;
+    await switchOrder(wanted);
+  } else {
+    lsSet(CURRENT_KEY, orderId);
+    if (location.hash.slice(1) !== orderId) location.hash = orderId;
+    renderLibrary();
+    await loadOrder();
+    renderAll();
+    await sync();
+  }
+})();
 </script>
 </body>
 </html>
