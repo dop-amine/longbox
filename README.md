@@ -82,6 +82,10 @@ were ever reused.
 - add, rename or delete an entry (series, issue, note, alternate tint)
 - add, retitle or delete a section, and set whether it counts toward the main
   line or carries a flagged note
+- edit a section's **collected editions** — which trade, omnibus or complete
+  collection covers it, and the year. Kept in its own field and rendered in
+  mono under the note, because it is reference data you scan while looking for
+  the book, not prose you read
 - reorder entries within a section, and reorder sections
 
 Changes save immediately. Ticking still works while editing.

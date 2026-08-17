@@ -99,6 +99,19 @@
   .blk-note.flag{
     border-left:3px solid var(--red);padding-left:10px;
   }
+  /* Which book to pull off the shelf. Mono and boxed so it reads as reference
+     data rather than more prose — you scan this, you don't read it. */
+  .blk-collected{
+    margin:12px 0 2px;border:1px solid var(--hair);background:#131317;
+    padding:10px 12px;max-width:64ch;
+  }
+  .blk-collected .lbl{
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--red);display:block;margin-bottom:5px;
+  }
+  .blk-collected p{
+    font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--ink-soft);margin:0;
+  }
 
   ul.list{list-style:none;margin:12px 0 0;padding:0}
   li.row{border-bottom:1px solid var(--hair);display:flex;align-items:center}
@@ -422,6 +435,7 @@ function sectionForm(sec){
   form.appendChild(field("n", "Number", sec.n));
   form.appendChild(field("title", "Title", sec.title));
   form.appendChild(field("note", "Note", sec.note));
+  form.appendChild(field("collected", "Collected editions", sec.collected));
 
   const checks = el("div", "checks");
   const coreLabel = el("label", "check");
@@ -448,6 +462,7 @@ function sectionForm(sec){
     sec.n = fields.n.value;
     sec.title = fields.title.value;
     sec.note = fields.note.value;
+    sec.collected = fields.collected.value;
     sec.core = core.checked;
     sec.flag = flag.checked;
     editTarget = null;
@@ -554,8 +569,14 @@ function sectionBlock(sec, si){
 
   if (editTarget && editTarget.kind === "section" && editTarget.id === sec.id) {
     blk.appendChild(sectionForm(sec));
-  } else if (sec.note) {
-    blk.appendChild(el("p", "blk-note" + (sec.flag ? " flag" : ""), sec.note));
+  } else {
+    if (sec.note) blk.appendChild(el("p", "blk-note" + (sec.flag ? " flag" : ""), sec.note));
+    if (sec.collected) {
+      const box = el("div", "blk-collected");
+      box.appendChild(el("span", "lbl", "Collected"));
+      box.appendChild(el("p", null, sec.collected));
+      blk.appendChild(box);
+    }
   }
 
   const ul = el("ul", "list");

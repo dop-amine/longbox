@@ -75,6 +75,22 @@ test("the seed carries no HTML entities", async () => {
   assert.equal(/&[a-z]+;/.test(JSON.stringify(live.sections)), false);
 });
 
+test("every seeded section says which volume collects it", async () => {
+  // The whole point of the field: standing in front of a library, you need to
+  // know which book this section is in. A blank one is a gap, not a style choice.
+  const live = await getList();
+  const missing = live.sections.filter((s) => !s.collected || !s.collected.trim());
+  assert.deepEqual(missing.map((s) => s.n), [], "sections with no collected-editions text");
+});
+
+test("the collected-editions field round-trips", async () => {
+  const live = await getList();
+  live.sections[0].collected = "Some Omnibus Vol. 1 (2019)";
+  const res = await putList({ rev: live.rev, sections: live.sections });
+  assert.equal(res.status, 200);
+  assert.equal((await getList()).sections[0].collected, "Some Omnibus Vol. 1 (2019)");
+});
+
 test("a valid write bumps the revision", async () => {
   const live = await getList();
   live.sections[0].title = "Before the Beginning (edited)";

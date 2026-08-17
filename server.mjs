@@ -203,6 +203,10 @@ function validateList(input) {
       core: !!sec.core,
       flag: !!sec.flag,
       note: str(sec.note, `section ${si} note`, LIMITS.note),
+      // Which trade/omnibus covers this section, and the year — kept separate
+      // from `note` so the editorial line stays prose and this stays a lookup
+      // you can scan while standing in front of a library.
+      collected: str(sec.collected, `section ${si} collected`, LIMITS.note),
       items: sec.items.map((it, ii) => {
         if (!it || typeof it !== "object") throw new Invalid(`item ${si}.${ii} is not an object`);
         if (typeof it.id !== "string" || !ID_RE.test(it.id)) throw new Invalid(`item ${si}.${ii} has an invalid id`);

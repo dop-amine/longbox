@@ -37,7 +37,8 @@
           "note": "F4 600, FF 12, F4 601, FF 13, F4 602, FF 14, F4 603, FF 15, F4 604, FF 16, F4 605, 605.1, 606, FF 17–18, F4 607–608, FF 19–21, F4 609–610, FF 22, F4 611, FF 23",
           "alt": false
         }
-      ]
+      ],
+      "collected": "Fantastic Four by Jonathan Hickman: The Complete Collection v1-4 (2018-22). v1 = Fantastic Four #570-578 + Dark Reign: Fantastic Four #1-5 - v2 = #579-588 + FF (2011) #1-5 - v3 = FF #6-16 + Fantastic Four #600-604 - v4 = Fantastic Four #605-611, 605.1 + FF #17-23. Watch out: the trades place Dark Reign after #570-578, not before it as the order above has it. Also collected as two Hickman Fantastic Four omnibuses."
     },
     {
       "id": "s-001",
@@ -215,7 +216,8 @@
           "note": "Leads straight into Infinity",
           "alt": false
         }
-      ]
+      ],
+      "collected": "Avengers (2012 series) #1-44 and New Avengers (2013 series) #1-33 - check the year, both titles have been relaunched repeatedly. Avengers by Jonathan Hickman: The Complete Collection v1 (Avengers #1-5, New Avengers #1-6) and v2 (Avengers #6-17, New Avengers #7). As original trades: Avengers v1-3 (Avengers World / The Last White Event / Prelude to Infinity) and New Avengers v1-2 (Everything Dies / Infinity)."
     },
     {
       "id": "s-002",
@@ -358,7 +360,8 @@
           "note": "Digital-first Silver Surfer side-story, set during the event",
           "alt": false
         }
-      ]
+      ],
+      "collected": "Infinity (2013). Complete Collection v3 = Infinity #1-6, Avengers #18-23, New Avengers #8-12. The standalone Infinity collection is wider - it folds in Avengers #14-17 and Against the Tide, so it overlaps the end of section 001."
     },
     {
       "id": "s-003",
@@ -606,7 +609,8 @@
           "note": "",
           "alt": false
         }
-      ]
+      ],
+      "collected": "Complete Collection v4 = Avengers #24-34, New Avengers #13-23. Original Sin (2014) #0-8 is its own trade and sits in no Hickman collection. Avengers #34.1 and #34.2 fall on the v4/v5 seam and I could not confirm which volume carries them - check the contents page before buying either."
     },
     {
       "id": "s-004",
@@ -679,7 +683,8 @@
           "note": "Hickman's Ultimate Universe run.",
           "alt": false
         }
-      ]
+      ],
+      "collected": "Years, in the order listed: Captain America (2012 series) #16-21 = 2014 - Thor: God of Thunder = 2012-14 - X-Men: Schism = 2011 - Avengers: X-Sanction = 2011-12 - Avengers vs. X-Men = 2012 - Superior Iron Man = 2014-15 - Infinity Companion = the 2013 tie-ins - Ultimate Comics: Doomsday = 2010-11 - Ultimate Comics: The Ultimates = 2011-13. Each is collected under its own title; none appear in the Hickman collections."
     },
     {
       "id": "s-005",
@@ -829,7 +834,8 @@
           "note": "",
           "alt": false
         }
-      ]
+      ],
+      "collected": "Avengers: Time Runs Out v1-4 (2015). v1 = Avengers #35-37 + New Avengers #24-25 - v2 = Avengers #38-39 + New Avengers #26-28 - v3 = Avengers #40-42 + New Avengers #29-30 - v4 = Avengers #43-44 + New Avengers #31-33. Identical contents to Complete Collection v5, so you need one or the other, not both."
     },
     {
       "id": "s-006",
@@ -909,7 +915,8 @@
           "note": "",
           "alt": false
         }
-      ]
+      ],
+      "collected": "Secret Wars (2015-16). The trade collects #1-9 plus the Free Comic Book Day 2015 prologue. The omnibus adds Time Runs Out, so it covers section 005 as well."
     },
     {
       "id": "s-007",
@@ -1255,7 +1262,8 @@
           "note": "Epilogue",
           "alt": false
         }
-      ]
+      ],
+      "collected": "All 2015-16. Every mini here is collected as its own single trade under its own title - there is no combined tie-ins volume, so search your library by the series name in each row rather than by Secret Wars."
     },
     {
       "id": "s-008",
@@ -1363,7 +1371,8 @@
           "note": "Closes the loop on the Ultimates cosmology",
           "alt": false
         }
-      ]
+      ],
+      "collected": "2015-2022, across several relaunches, so the year is the disambiguator on almost every row. Ultimates (2015) #1-12 and Ultimates 2 are collected together as Ultimates by Al Ewing: The Complete Collection (2021) - otherwise these are ordinary multi-volume trades under their own titles."
     },
     {
       "id": "s-009",
@@ -1423,13 +1432,21 @@
           "alt": false
         },
         {
+          "id": "x-ultimate-endgame-1-5",
+          "s": "Ultimate Endgame",
+          "i": "#1–5",
+          "note": "Deniz Camp & Jonas Scharf. The Maker returns; Finale picks up straight after",
+          "alt": false
+        },
+        {
           "id": "009-ultimate-universe-finale-2026-1",
           "s": "Ultimate Universe: Finale",
           "i": "(2026) #1",
           "note": "The line closes out",
           "alt": false
         }
-      ]
+      ],
+      "collected": "2023-26. Ultimate Invasion (2023) - Ultimate Universe #1 (2023) - Ultimate Spider-Man (2024) #1-24, ran Jan 2024 to Feb 2026 - Ultimates (2024) #1-24, Jun 2024 to May 2026 - Ultimate Spider-Man: Incursion (Jun 2025, crossover with Miles Morales: Spider-Man) - One Year In (2025) - Two Years In (Dec 2025) - Ultimate Endgame #1-5 (Dec 2025 to Apr 2026) - Ultimate Universe: Finale #1 (29 Apr 2026, the last book of the line). Trades run 4-6 issues per volume under each series title."
     },
     {
       "id": "s-010",
@@ -1446,7 +1463,8 @@
           "note": "Ryan North. Doom on the throne again, ten years on",
           "alt": false
         }
-      ]
+      ],
+      "collected": "One World Under Doom #1-9 (Feb to Nov 2025), Ryan North and R.B. Silva. Nine issues plus a wide tie-in line; the main-series trade is the one you want."
     }
   ]
 }
