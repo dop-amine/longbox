@@ -38,11 +38,11 @@ jobs:
         with:
           context: .
           load: true
-          tags: secret-wars:candidate
+          tags: longbox:candidate
 
       - name: The image must actually serve
         run: |
-          docker run -d --name candidate -p 8087:8080 secret-wars:candidate
+          docker run -d --name candidate -p 8087:8080 longbox:candidate
           ok=0
           for _ in $(seq 1 20); do
             if curl -sf --max-time 2 localhost:8087/healthz > /tmp/health; then ok=1; break; fi
@@ -73,5 +73,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/dop-amine/secret-wars:latest
-            ghcr.io/dop-amine/secret-wars:${{ github.sha }}
+            ghcr.io/dop-amine/longbox:latest
+            ghcr.io/dop-amine/longbox:${{ github.sha }}

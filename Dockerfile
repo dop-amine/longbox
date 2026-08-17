@@ -1,7 +1,7 @@
 # No build step and no dependencies — the image is node plus four files.
 FROM node:22-alpine
 
-WORKDIR /srv/secret-wars
+WORKDIR /srv/longbox
 
 COPY server.mjs .
 COPY public ./public

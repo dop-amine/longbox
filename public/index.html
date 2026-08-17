@@ -7,8 +7,8 @@
 <meta name="theme-color" content="#0D0D0F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Reading Order">
-<title>Reading Order</title>
+<meta name="apple-mobile-web-app-title" content="Longbox">
+<title>Longbox</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -171,6 +171,38 @@
   li.row.alt .title{color:var(--blue)}
   li.row.alt input:checked ~ .title{color:var(--ink-soft)}
 
+  /* A row can point at wherever the issue actually lives. Outside the label,
+     so opening it never toggles the tick. */
+  .readlink{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--blue);border:1px solid var(--hair);padding:5px 7px;margin-right:4px;
+    text-decoration:none;flex:0 0 auto;
+  }
+  .readlink:hover{border-color:var(--blue);color:#fff}
+  .readlink:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+  /* ---------- filtering ---------- */
+  .filters{display:flex;align-items:center;gap:8px;margin:24px 0 0;flex-wrap:wrap}
+  .filters input[type=search]{
+    font-family:var(--body);font-size:14px;color:var(--ink);
+    background:#101014;border:1px solid var(--hair);padding:8px 10px;flex:1;min-width:180px;
+  }
+  .filters input[type=search]:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
+  .filters .count{font-family:var(--mono);font-size:11px;color:var(--ink-soft);white-space:nowrap}
+
+  /* ---------- read-only view ---------- */
+  /* Hides the controls for someone you sent a link to. It is a presentation
+     mode, not a permission: anyone who can reach the host can still call the
+     API. The network is the only real gate. */
+  body.readonly .library,
+  body.readonly .libmenu,
+  body.readonly .mast-tools,
+  body.readonly .tools,
+  body.readonly .adder,
+  body.readonly #editBtn,
+  body.readonly #resetBtn{display:none!important}
+  body.readonly li.row label{cursor:default}
+
   /* ---------- edit mode ---------- */
   .tools{display:none;gap:4px;padding:0 4px;flex:0 0 auto}
   body.editing .tools{display:flex}
@@ -282,8 +314,15 @@
       <button id="guideBtn" type="button">How to write a list</button>
       <button id="deleteOrderBtn" type="button">Delete this one</button>
     </div>
+    <div class="row">
+      <button id="undoBtn" type="button">Undo last change</button>
+      <button id="shareBtn" type="button">Copy read-only link</button>
+      <button id="backupBtn" type="button">Back up everything</button>
+      <button id="restoreBtn" type="button">Restore a backup</button>
+    </div>
     <div class="row" id="seedRow"></div>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <input type="file" id="restoreFile" accept="application/json,.json" hidden>
   </div>
 
   <header class="mast">
@@ -313,6 +352,12 @@
 
     <p class="hint">Editing. Ticks still work; changes save immediately. Deleting an entry also deletes its tick.</p>
   </header>
+
+  <div class="filters">
+    <input type="search" id="filterInput" placeholder="Filter this list — series, issue or note" aria-label="Filter this list">
+    <button id="hideDoneBtn" type="button" aria-pressed="false">Hide ticked</button>
+    <span class="count" id="filterCount"></span>
+  </div>
 
   <main id="sections"></main>
 
@@ -367,6 +412,14 @@ let dirty = false;
 let syncTimer = null;
 let editing = false;
 let editTarget = null; // {kind:"item"|"section"|"meta", id}
+
+// ?read=1 hides every control, for a link you hand to someone else. It is a
+// presentation mode and not a permission: the API is still there for anyone
+// who can reach the host, which is what the network gate is for.
+const readOnly = new URLSearchParams(location.search).get("read") === "1";
+const HIDE_DONE_KEY = "rtsw:hideDone";
+let filterText = "";
+let hideDone = lsGet(HIDE_DONE_KEY, false) === true;
 
 const host = document.getElementById("sections");
 const stateEl = document.getElementById("saveState");
@@ -542,6 +595,7 @@ function itemForm(sec, it){
     ["s", "Series", it.s],
     ["i", "Issue", it.i],
     ["note", "Note", it.note],
+    ["url", "Link — where to read it (optional)", it.url],
   ]);
   const checks = el("div", "checks");
   const alt = checkbox(checks, "Alternate tint", it.alt);
@@ -555,6 +609,7 @@ function itemForm(sec, it){
     it.s = fields.s.value;
     it.i = fields.i.value;
     it.note = fields.note.value;
+    it.url = fields.url.value;
     it.alt = alt.checked;
     editTarget = null;
     commitOrder();
@@ -663,6 +718,7 @@ function itemRow(sec, it, si, ii){
   box.type = "checkbox";
   box.dataset.id = it.id;
   box.checked = !!(items[it.id] && items[it.id].c);
+  box.disabled = readOnly;
   label.appendChild(box);
   label.appendChild(el("span", "box"));
 
@@ -671,6 +727,18 @@ function itemRow(sec, it, si, ii){
   label.appendChild(title);
   label.appendChild(el("span", "issue", it.i));
   li.appendChild(label);
+
+  // Outside the label on purpose: inside it, opening the link would also tick
+  // the row. The server only ever stores http(s) links, so this can't be a
+  // javascript: URL.
+  if (it.url) {
+    const open = el("a", "readlink", "read");
+    open.href = it.url;
+    open.target = "_blank";
+    open.rel = "noopener noreferrer";
+    open.title = "Open " + it.s;
+    li.appendChild(open);
+  }
 
   const tools = el("div", "tools");
   tools.appendChild(tool("↑", "Move up", () => { if (move(sec.items, ii, -1)) commitOrder(); }));
@@ -723,7 +791,7 @@ function sectionBlock(sec, si){
   const add = el("button", null, "+ Add entry to " + sec.title);
   add.type = "button";
   add.addEventListener("click", () => {
-    const it = { id: newId(), s: "", i: "", note: "", alt: false };
+    const it = { id: newId(), s: "", i: "", note: "", url: "", alt: false };
     sec.items.push(it);
     editTarget = { kind: "item", id: it.id };
     renderAll();
@@ -785,6 +853,35 @@ function renderAll(){
   (order.sections || []).forEach((sec, si) => host.appendChild(sectionBlock(sec, si)));
   if (!(order.sections || []).length) host.appendChild(emptyState());
   paint();
+  applyFilters();
+}
+
+// Filtering is presentational only — nothing is written, and a hidden row is
+// still counted in the totals, because progress is a fact about the list
+// rather than about what you are currently looking at.
+function applyFilters(){
+  const query = filterText.trim().toLowerCase();
+  let shown = 0;
+
+  host.querySelectorAll("section.blk").forEach(blk => {
+    let visible = 0;
+    blk.querySelectorAll("li.row").forEach(li => {
+      const box = li.querySelector("input[data-id]");
+      const ticked = box ? box.checked : false;
+      const matches = !query || li.textContent.toLowerCase().includes(query);
+      // A row being edited stays put whatever the filter says, or the form
+      // vanishes under the author mid-sentence.
+      const isForm = !!li.querySelector(".form");
+      const show = isForm || (matches && !(hideDone && ticked));
+      li.style.display = show ? "" : "none";
+      if (show) { visible++; shown++; }
+    });
+    // Keep empty sections while editing so they can still be worked on.
+    blk.style.display = visible || editing || !blk.querySelector("li.row") ? "" : "none";
+  });
+
+  document.getElementById("filterCount").textContent =
+    query || hideDone ? shown + " shown" : "";
 }
 
 function paint(){
@@ -958,6 +1055,7 @@ async function sync(){
     lsSet(keyMirror(id), items);
     refreshBoxes();
     paint();
+    applyFilters();
     statusIdle();
   } catch {
     status(pending.length ? pending.length + " queued" : "Offline", true);
@@ -993,6 +1091,7 @@ document.addEventListener("change", e => {
   if (!b.matches('input[type="checkbox"][data-id]')) return;
   record(b.dataset.id, b.checked);
   paint();
+  applyFilters();
   status("Saving");
   scheduleSync();
 });
@@ -1090,6 +1189,79 @@ document.getElementById("guideBtn").addEventListener("click", () => {
   window.open("/authoring.md", "_blank", "noopener");
 });
 
+document.getElementById("filterInput").addEventListener("input", e => {
+  filterText = e.target.value;
+  applyFilters();
+});
+
+document.getElementById("hideDoneBtn").addEventListener("click", e => {
+  hideDone = !hideDone;
+  lsSet(HIDE_DONE_KEY, hideDone);
+  e.currentTarget.setAttribute("aria-pressed", String(hideDone));
+  applyFilters();
+});
+
+// Going back writes a new revision rather than rewinding, so an undo can
+// itself be undone. Ticks purged by whatever is being undone come back too.
+document.getElementById("undoBtn").addEventListener("click", async () => {
+  if (!confirm("Undo the last change to this list?")) return;
+  try {
+    order = await api("/api/orders/" + orderId + "/revert", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({})
+    });
+    lsSet(keyList(orderId), order);
+    editTarget = null;
+    renderAll();
+    await loadLibrary();
+    await sync();
+    status("Undone");
+  } catch (err) {
+    status("Nothing to undo: " + err.message, true);
+  }
+});
+
+document.getElementById("shareBtn").addEventListener("click", async () => {
+  const url = location.origin + location.pathname + "?read=1#" + orderId;
+  try {
+    await navigator.clipboard.writeText(url);
+    status("Link copied");
+  } catch {
+    prompt("Read-only link:", url);
+  }
+});
+
+document.getElementById("backupBtn").addEventListener("click", () => {
+  window.location.href = "/api/backup";
+});
+
+document.getElementById("restoreBtn").addEventListener("click", () => {
+  document.getElementById("restoreFile").click();
+});
+
+document.getElementById("restoreFile").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  if (!confirm("Restore this backup? Lists with the same id are replaced; anything else is left alone.")) return;
+  try {
+    const doc = JSON.parse(await file.text());
+    const result = await api("/api/restore", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(doc)
+    });
+    await loadLibrary();
+    await loadOrder();
+    renderAll();
+    await sync();
+    status("Restored " + result.restored + " list(s)");
+  } catch (err) {
+    status("Restore failed: " + err.message, true);
+  }
+});
+
 // Duplicating is the safe way to try a restructure on a list you are midway
 // through — the copy starts with no ticks, the original keeps its own.
 document.getElementById("duplicateBtn").addEventListener("click", async () => {
@@ -1168,6 +1340,9 @@ setInterval(() => { if (!document.hidden) sync(); }, POLL_MS);
 /* ---------- boot ---------- */
 
 (async function boot(){
+  if (readOnly) document.body.classList.add("readonly");
+  document.getElementById("hideDoneBtn").setAttribute("aria-pressed", String(hideDone));
+
   // Paint from the mirror first so a cold start shows something immediately,
   // then reconcile with the server.
   const remembered = location.hash.slice(1) || lsGet(CURRENT_KEY, null);

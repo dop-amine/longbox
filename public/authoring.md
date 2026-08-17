@@ -72,6 +72,7 @@ Everything else has a sensible default.
 | `s` | the series name — the only required field |
 | `i` | the issue or range: `"#1"`, `"#1-6"`, `"(2015) #1-5"` |
 | `note` | a short line under the title |
+| `url` | where to actually read it — a link to your comic server, a store page, anything. Must be `http` or `https`. Shows as a **read** button on the row |
 | `alt` | `true` tints the row blue. Useful when two titles alternate |
 
 ---

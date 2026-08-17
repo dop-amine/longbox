@@ -50,7 +50,8 @@ const MAX_OPS = 2000;
 const MAX_TICKS_PER_ORDER = 5000;
 const ID_RE = /^[a-z0-9-]{1,120}$/;
 
-const LIMITS = { n: 16, title: 160, note: 4000, s: 240, i: 160, word: 40 };
+const LIMITS = { n: 16, title: 160, note: 4000, s: 240, i: 160, word: 40, url: 2000 };
+const HISTORY_DEPTH = 20;
 const MAX_ORDERS = 100;
 const MAX_SECTIONS = 200;
 const MAX_ITEMS_PER_SECTION = 1000;
@@ -90,8 +91,36 @@ function persist(file, doc) {
 }
 
 const orderFile = (id) => join(ORDERS_DIR, `${id}.json`);
+const historyFile = (id) => join(ORDERS_DIR, `${id}.history.json`);
 const persistOrder = (order) => persist(orderFile(order.id), order);
 const persistState = () => persist(STATE_FILE, state);
+
+// Unlike readJson, a damaged history file is not worth refusing to start over:
+// it is a convenience, and the current document is elsewhere.
+async function readHistory(id) {
+  try {
+    return JSON.parse(await readFile(historyFile(id), "utf8"));
+  } catch {
+    return { id, revisions: [] };
+  }
+}
+
+// Keeps the last HISTORY_DEPTH versions of an order so an accidental delete of
+// a forty-entry section is recoverable. Called with the doc being replaced.
+// The ticks are snapshotted with the document because deleting a section
+// purges the ticks under it. Without them, undoing a delete would bring back
+// forty rows with every one of them unread.
+async function recordHistory(previous, ticks) {
+  const history = await readHistory(previous.id);
+  history.revisions.unshift({
+    rev: previous.rev,
+    updated: previous.updated,
+    doc: previous,
+    ticks: { ...ticks },
+  });
+  history.revisions = history.revisions.slice(0, HISTORY_DEPTH);
+  return persist(historyFile(previous.id), history);
+}
 
 /* ---------- validation ---------- */
 
@@ -120,6 +149,24 @@ function str(value, field, max, { required = false } = {}) {
 
 // The masthead text. Every field is optional except the title, so a brand new
 // order is usable before anyone writes any copy for it.
+// A link on a row points at wherever the issue actually lives — a comic
+// server, a store page, a wiki. Only http(s): a javascript: or data: URL in a
+// field the page renders as an anchor is a script-injection waiting to happen.
+function link(value, field) {
+  const raw = str(value, field, LIMITS.url);
+  if (!raw) return "";
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Invalid(`${field} is not a valid URL`);
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Invalid(`${field} must be an http or https link`);
+  }
+  return parsed.href;
+}
+
 function validateMeta(input) {
   return {
     title: str(input.title, "title", LIMITS.title, { required: true }),
@@ -179,6 +226,8 @@ function validateSections(input) {
           s: str(it.s, `item ${si}.${ii} series`, LIMITS.s, { required: true }),
           i: str(it.i, `item ${si}.${ii} issue`, LIMITS.i),
           note: str(it.note, `item ${si}.${ii} note`, LIMITS.note),
+          // Where to actually read it.
+          url: link(it.url, `item ${si}.${ii} link`),
           alt: !!it.alt,
         };
       }),
@@ -206,6 +255,7 @@ const ITEM_KEYS = {
   s: ["s", "series", "title", "name", "comic", "book"],
   i: ["i", "issue", "issues", "number", "num"],
   note: ["note", "notes", "comment", "description"],
+  url: ["url", "link", "href"],
   alt: ["alt", "alternate", "tint"],
 };
 const META_KEYS = {
@@ -282,6 +332,7 @@ function normaliseImport(input) {
           s: it.s === undefined ? "" : String(it.s),
           i: it.i === undefined ? "" : String(it.i),
           note: it.note === undefined ? "" : String(it.note),
+          url: it.url === undefined ? "" : String(it.url),
           alt: !!it.alt,
         };
       }),
@@ -412,7 +463,11 @@ async function load() {
 
   let files = [];
   try {
-    files = (await readdir(ORDERS_DIR)).filter((f) => f.endsWith(".json"));
+    // .history.json sits alongside each order; adopting one as an order would
+    // put a second copy of every list in the library.
+    files = (await readdir(ORDERS_DIR)).filter(
+      (f) => f.endsWith(".json") && !f.endsWith(".history.json")
+    );
   } catch {}
 
   for (const file of files.sort()) {
@@ -694,6 +749,72 @@ const server = createServer(async (req, res) => {
       }
     }
 
+    // Everything, in one file: every order and every tick. The data directory
+    // is otherwise the only copy, and a per-order export deliberately drops
+    // the ticks — which is exactly what you want back after a disaster.
+    if (path === "/api/backup" && req.method === "GET") {
+      const stamp = new Date().toISOString().slice(0, 10);
+      return sendJson(
+        res,
+        200,
+        {
+          format: "longbox-backup",
+          version: 1,
+          exported: Date.now(),
+          orders: [...orders.values()],
+          ticks: state.orders,
+        },
+        { "content-disposition": `attachment; filename="longbox-${stamp}.json"` }
+      );
+    }
+
+    if (path === "/api/restore" && req.method === "POST") {
+      const payload = await parseBody(req);
+      if (!Array.isArray(payload.orders)) throw new Invalid("expected a backup with an orders array");
+
+      // Restores by id: an order in the backup replaces the one on disk, and
+      // anything not mentioned is left alone. Nothing is deleted here — an
+      // accidental restore should never be the thing that loses a list.
+      let restored = 0;
+      for (const doc of payload.orders) {
+        const id = typeof doc.id === "string" && ID_RE.test(doc.id) ? doc.id : uniqueOrderId(doc.title || "restored");
+        const existing = orders.get(id);
+        if (existing) await recordHistory(existing, ticksFor(id));
+        const order = {
+          id,
+          rev: (existing ? existing.rev : 0) + 1,
+          updated: Date.now(),
+          ...validateMeta(doc),
+          sections: validateSections(doc.sections || []),
+        };
+        orders.set(id, order);
+        persistOrder(order);
+        restored++;
+      }
+
+      let ticks = 0;
+      for (const [orderId, items] of Object.entries(payload.ticks || {})) {
+        if (!orders.has(orderId) || !items || typeof items !== "object") continue;
+        const live = ticksFor(orderId);
+        for (const [itemId, value] of Object.entries(items)) {
+          if (!ID_RE.test(itemId) || !value || typeof value.c !== "boolean") continue;
+          const t = Math.min(Number(value.t) || Date.now(), Date.now());
+          // Same last-write-wins rule as a live sync: a restore must not
+          // silently undo something ticked after the backup was taken.
+          if (!live[itemId] || live[itemId].t <= t) {
+            live[itemId] = { c: value.c, t };
+            ticks++;
+          }
+        }
+      }
+      state.rev++;
+      state.updated = Date.now();
+      persistState();
+      await writeChain;
+      console.log(`restore: ${restored} orders, ${ticks} ticks`);
+      return sendJson(res, 200, { restored, ticks, orders: [...orders.values()].map(summarise) });
+    }
+
     if (path === "/api/orders") {
       if (req.method === "GET") {
         // Sorted by title, always. In-memory the orders sit in creation order
@@ -714,10 +835,71 @@ const server = createServer(async (req, res) => {
       return sendJson(res, 405, { error: "method not allowed" });
     }
 
-    const orderMatch = path.match(/^\/api\/orders\/([a-z0-9-]{1,64})(\/export)?$/);
+    const orderMatch = path.match(/^\/api\/orders\/([a-z0-9-]{1,64})(?:\/(export|history|revert))?$/);
     if (orderMatch) {
-      const [, id, exporting] = orderMatch;
+      const [, id, actionRaw] = orderMatch;
+      const action = actionRaw || "";
+      const exporting = action === "export";
       const order = requireOrder(id);
+
+      if (action === "history") {
+        if (req.method !== "GET") return sendJson(res, 405, { error: "method not allowed" });
+        const history = await readHistory(id);
+        return sendJson(
+          res,
+          200,
+          history.revisions.map((r) => ({
+            rev: r.rev,
+            updated: r.updated,
+            sections: (r.doc.sections || []).length,
+            items: (r.doc.sections || []).reduce((n, s) => n + (s.items || []).length, 0),
+          }))
+        );
+      }
+
+      if (action === "revert") {
+        if (req.method !== "POST") return sendJson(res, 405, { error: "method not allowed" });
+        const payload = await parseBody(req);
+        const history = await readHistory(id);
+        const target =
+          payload.rev === undefined
+            ? history.revisions[0]
+            : history.revisions.find((r) => r.rev === Number(payload.rev));
+        if (!target) throw new Invalid("no earlier version to go back to", 404);
+
+        // Forward-only: going back writes a NEW revision rather than rewinding
+        // the counter, so the undo itself can be undone and no history is lost.
+        await recordHistory(order, ticksFor(id));
+        const restored = {
+          id,
+          rev: order.rev + 1,
+          updated: Date.now(),
+          ...validateMeta(target.doc),
+          sections: validateSections(target.doc.sections),
+        };
+        orders.set(id, restored);
+        persistOrder(restored);
+
+        // Put back the ticks that were purged along with whatever this undoes,
+        // but never overwrite a tick made since.
+        const live = ticksFor(id);
+        const ids = new Set(restored.sections.flatMap((s) => s.items.map((it) => it.id)));
+        let revived = 0;
+        for (const [itemId, value] of Object.entries(target.ticks || {})) {
+          if (ids.has(itemId) && !live[itemId]) {
+            live[itemId] = value;
+            revived++;
+          }
+        }
+        if (revived) {
+          state.rev++;
+          state.updated = Date.now();
+          persistState();
+        }
+        await writeChain;
+        console.log(`${id}: reverted to rev ${target.rev} as rev ${restored.rev}, ${revived} ticks revived`);
+        return sendJson(res, 200, restored);
+      }
 
       if (req.method === "GET") {
         if (exporting) {
@@ -747,6 +929,8 @@ const server = createServer(async (req, res) => {
           ...validateMeta(payload),
           sections: validateSections(payload.sections),
         };
+        // Snapshot before anything is purged, so undo can put the ticks back.
+        await recordHistory(order, ticksFor(id));
         orders.set(id, updated);
         persistOrder(updated);
         const dropped = purgeOrphanTicks(id, updated.sections);
@@ -767,6 +951,7 @@ const server = createServer(async (req, res) => {
         persistState();
         await writeChain;
         await unlink(orderFile(id)).catch(() => {});
+        await unlink(historyFile(id)).catch(() => {});
         console.log(`deleted ${id}`);
         return sendJson(res, 200, { deleted: id });
       }

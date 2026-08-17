@@ -124,7 +124,7 @@ test("ticks survive a restart", async () => {
 });
 
 let failed = 0;
-dataDir = await mkdtemp(join(tmpdir(), "secret-wars-test-"));
+dataDir = await mkdtemp(join(tmpdir(), "longbox-test-"));
 await start();
 
 for (const [name, fn] of tests) {

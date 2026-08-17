@@ -1,8 +1,9 @@
-# secret-wars
+# Longbox
 
-A self-hosted checklist for comic reading orders. Keep several of them, tick
-issues off on any device, and edit the lists from the page itself — progress
-lives on your own server rather than in one browser's localStorage.
+A self-hosted checklist for comic reading orders — named after the box the run
+actually lives in. Keep several lists, tick issues off on any device, and edit
+them from the page itself. Progress lives on your own server rather than in one
+browser's localStorage.
 
 It ships with one worked example, **Road to Secret Wars** (Jonathan Hickman's
 *Fantastic Four* and *Avengers*, the event itself, the tie-ins, and everything
@@ -23,6 +24,10 @@ plus a `public/` directory.
 | `/api/orders` | GET | the library index |
 | `/api/orders` | POST | create one: `{title}`, `{seed}`, `{copy}` or `{order}` (import) |
 | `/api/validate` | POST | dry run — check a document without saving it |
+| `/api/orders/:id/history` | GET | the last 20 versions of an order |
+| `/api/orders/:id/revert` | POST | go back to one, as a new revision |
+| `/api/backup` | GET | every order and every tick, in one file |
+| `/api/restore` | POST | put a backup back |
 | `/api/orders/:id` | GET | one order: masthead text + sections |
 | `/api/orders/:id` | PUT | replace it, guarded by `rev` |
 | `/api/orders/:id` | DELETE | remove it and its ticks |
@@ -89,10 +94,33 @@ library menu:
 - **Export** — the current order as a portable file, without ticks
 - **How to write a list** — opens the authoring guide the app serves at
   `/authoring.md`
+- **Undo last change** — steps back one revision. The last 20 are kept, and
+  going back writes a *new* revision rather than rewinding, so the undo can
+  itself be undone and nothing is lost. Ticks purged by whatever is being
+  undone come back with it
+- **Copy read-only link** — see below
+- **Back up everything / Restore a backup** — one file with every order *and*
+  every tick, unlike a single-order export which deliberately drops them.
+  Restoring replaces lists by id, leaves anything unmentioned alone, and never
+  reverses a tick made after the backup was taken
 - **Delete this one** — the order and every tick on it (the last one is
   protected, so the page always has something to show)
 
 An order with no sections shows what to do next rather than a blank page.
+
+Above the list there is a filter box and a **Hide ticked** toggle. Both are
+presentational — a hidden row still counts toward the totals, because progress
+is a fact about the list, not about what you are currently looking at.
+
+### Read-only links
+
+**Copy read-only link** gives you `…/?read=1#the-order`, which hides every
+control: no editing, no ticking, no library. Useful for handing someone a
+reading order.
+
+It is a **presentation mode, not a permission**. Anyone who can reach the host
+can still call the API and change anything. The network is the only real gate
+here — see the note under *Running it*.
 
 The current order is in the URL (`/#road-to-secret-wars`), so it is
 bookmarkable and shareable.
@@ -101,7 +129,9 @@ bookmarkable and shareable.
 
 *Edit list* in the bottom bar turns on edit mode:
 
-- add, rename or delete an entry (series, issue, note, alternate tint)
+- add, rename or delete an entry (series, issue, note, alternate tint, and a
+  **link** to where it is actually read — your comic server, a store page —
+  which appears as a *read* button on the row)
 - add, retitle or delete a section, set whether it counts toward the main line
   or carries a flagged note
 - give a section its **collected editions** — which trade, omnibus or complete
@@ -198,7 +228,8 @@ list.
 ```bash
 node test/page.test.mjs      #  6 assertions — script/markup agreement
 node test/sync.test.mjs      # 10 assertions — ticks and merge rules
-node test/orders.test.mjs    # 27 assertions — library, editing, import, migration
+node test/orders.test.mjs    # 35 assertions — library, editing, import, history,
+                             #                 backup/restore, migration
 node --check server.mjs
 python3 scripts/make-icon.py # regenerate the iOS home-screen icon (stdlib only)
 ```

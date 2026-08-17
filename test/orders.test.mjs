@@ -339,6 +339,113 @@ test("an order can be duplicated, without its ticks", async () => {
   assert.ok(original.items[ticked.id].c, "the original keeps its ticks");
 });
 
+test("an entry can carry a link to where it is read", async () => {
+  const order = await getOrder();
+  order.sections[0].items[0].url = "https://books.example.com/series/1";
+  assert.equal((await putOrder(order)).status, 200);
+  assert.equal((await getOrder()).sections[0].items[0].url, "https://books.example.com/series/1");
+});
+
+test("a link that is not http(s) is refused", async () => {
+  // The page renders this as an anchor, so a javascript: URL here would be a
+  // script-injection route into every device that opens the list.
+  const order = await getOrder();
+  order.sections[0].items[0].url = "javascript:alert(1)";
+  const res = await putOrder(order);
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /http or https/i);
+
+  const clean = await getOrder();
+  assert.equal(clean.sections[0].items[0].url, "https://books.example.com/series/1", "the bad write was rejected whole");
+});
+
+test("undo brings back a deleted section and its ticks", async () => {
+  const order = await getOrder();
+  const doomed = order.sections[1];
+  const ticked = doomed.items[0];
+  await tick(EXAMPLE, ticked.id);
+  const before = order.sections.length;
+
+  order.sections = order.sections.filter((s) => s.id !== doomed.id);
+  assert.equal((await putOrder(order)).status, 200);
+  assert.equal((await getOrder()).sections.length, before - 1);
+  assert.equal((await json(`/api/state/${EXAMPLE}`)).items[ticked.id], undefined, "its ticks went with it");
+
+  const reverted = await (await raw(`/api/orders/${EXAMPLE}/revert`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  })).json();
+
+  assert.equal(reverted.sections.length, before, "the section is back");
+  assert.ok(reverted.sections.some((s) => s.id === doomed.id));
+  assert.equal((await json(`/api/state/${EXAMPLE}`)).items[ticked.id].c, true, "and so is the tick");
+});
+
+test("undo is forward-only, so it can itself be undone", async () => {
+  const before = await getOrder();
+  const history = await json(`/api/orders/${EXAMPLE}/history`);
+  assert.ok(history.length >= 2, "revisions are being kept");
+  assert.ok(history[0].rev < before.rev, "history holds the versions before this one");
+
+  const again = await (await raw(`/api/orders/${EXAMPLE}/revert`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  })).json();
+  assert.equal(again.rev, before.rev + 1, "reverting moves the revision forward, never back");
+});
+
+test("history files are not mistaken for reading orders", async () => {
+  // They live beside the orders as <id>.history.json; adopting one would put a
+  // duplicate of every list in the library on the next restart.
+  const before = (await json("/api/orders")).length;
+  await stop();
+  await start();
+  assert.equal((await json("/api/orders")).length, before);
+});
+
+test("a backup carries every order and every tick", async () => {
+  const res = await raw("/api/backup");
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get("content-disposition") || "", /longbox-/);
+  const backup = await res.json();
+  assert.equal(backup.format, "longbox-backup");
+  assert.equal(backup.orders.length, (await json("/api/orders")).length);
+  assert.ok(Object.keys(backup.ticks).length > 0, "ticks travel with it, unlike a single-list export");
+});
+
+test("restoring puts back a deleted list, ticks and all", async () => {
+  const backup = await json("/api/backup");
+  const victim = (await json("/api/orders")).find((o) => o.id !== EXAMPLE);
+  assert.ok(victim, "precondition: something other than the example exists");
+
+  await raw(`/api/orders/${victim.id}`, { method: "DELETE" });
+  assert.equal((await raw(`/api/orders/${victim.id}`)).status, 404);
+
+  const result = await json("/api/restore", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(backup),
+  });
+  assert.ok(result.restored >= 1);
+  assert.equal((await raw(`/api/orders/${victim.id}`)).status, 200, "the deleted list is back");
+});
+
+test("restoring never reverses a tick made after the backup", async () => {
+  const backup = await json("/api/backup");
+  const order = await getOrder();
+  const item = order.sections[0].items[2];
+  await tick(EXAMPLE, item.id, true, Date.now());
+
+  await json("/api/restore", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(backup),
+  });
+  assert.equal((await json(`/api/state/${EXAMPLE}`)).items[item.id].c, true, "the newer tick survived the restore");
+});
+
 test("a duplicate id is refused", async () => {
   const order = await getOrder();
   order.sections[0].items.push({ ...order.sections[0].items[0] });
@@ -390,7 +497,7 @@ test("everything survives a restart", async () => {
 // The single-list layout this app shipped with, converted in place on boot.
 test("a legacy single-list data directory migrates", async () => {
   await stop();
-  const legacyDir = await mkdtemp(join(tmpdir(), "secret-wars-legacy-"));
+  const legacyDir = await mkdtemp(join(tmpdir(), "longbox-legacy-"));
   const seed = JSON.parse(await readFile(join(SEED_DIR, `${EXAMPLE}.json`), "utf8"));
   const firstItem = seed.sections[0].items[0].id;
 
@@ -428,7 +535,7 @@ test("a legacy single-list data directory migrates", async () => {
 });
 
 let failed = 0;
-dataDir = await mkdtemp(join(tmpdir(), "secret-wars-orders-"));
+dataDir = await mkdtemp(join(tmpdir(), "longbox-orders-"));
 await mkdir(dataDir, { recursive: true });
 await start();
 

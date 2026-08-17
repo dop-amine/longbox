@@ -1,6 +1,6 @@
 {
-  "name": "Reading Order",
-  "short_name": "Reading Order",
+  "name": "Longbox",
+  "short_name": "Longbox",
   "description": "Self-hosted comic reading-order checklists that sync across your devices.",
   "start_url": "/",
   "scope": "/",

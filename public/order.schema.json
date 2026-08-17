@@ -106,6 +106,13 @@
           "maxLength": 160
         },
         "note": { "type": "string", "maxLength": 4000 },
+        "url": {
+          "description": "Where to actually read it. Must be http or https; shown as a 'read' button on the row.",
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://",
+          "maxLength": 2000
+        },
         "alt": {
           "description": "Tints the row, for when two titles alternate.",
           "type": "boolean"
