@@ -4,8 +4,22 @@
 // this service is to outlive interest in it, and a dependency-free single file
 // has no supply chain to rot, no lockfile to refresh and no build step.
 //
-// State is one JSON document on disk (DATA_DIR/state.json), bind-mounted from
-// the host so it survives image rolls and rebuilds.
+// Two documents live in DATA_DIR, and the split is the important design idea:
+//
+//   list.json   — the reading order itself (sections, series, issues). Edited
+//                 rarely and deliberately, through the site's edit mode.
+//   state.json  — which issues are ticked. Edited constantly, from any device.
+//
+// They are separate files with separate concurrency models because they have
+// separate failure modes. Ticks arrive as per-item ops merged last-write-wins,
+// so two devices can never revert each other. List edits are whole-document
+// writes guarded by a revision number, so a stale editor is refused outright
+// rather than silently overwriting a restructure made elsewhere.
+//
+// The link between them is the item id, which is FROZEN. Ids were originally
+// derived from the item's text, which meant renaming an issue orphaned its
+// tick; seed/list.json pins the ids that scheme produced, and nothing
+// recomputes them again. An id, once assigned, outlives every edit to the row.
 //
 // There is no auth here on purpose. The gate is the network: the container
 // binds loopback only, and a reverse proxy in front restricts by source IP.
@@ -20,60 +34,92 @@ import { fileURLToPath } from "node:url";
 const PORT = Number(process.env.PORT || 8080);
 const DATA_DIR = process.env.DATA_DIR || "/data";
 const PUBLIC_DIR = fileURLToPath(new URL("./public/", import.meta.url));
+const SEED_FILE = fileURLToPath(new URL("./seed/list.json", import.meta.url));
 const STATE_FILE = join(DATA_DIR, "state.json");
+const LIST_FILE = join(DATA_DIR, "list.json");
 
-const MAX_BODY = 256 * 1024; // a full reset of ~250 items is ~20 KB
+const MAX_BODY = 1024 * 1024; // the whole list document is ~60 KB
 const MAX_OPS = 2000;
-const MAX_ITEMS = 5000; // ceiling on distinct ids ever stored
+const MAX_ITEMS = 5000;
 const ID_RE = /^[a-z0-9-]{1,120}$/;
+
+// Field caps. Generous enough that no real entry hits them, small enough that
+// the document can't grow without bound through the editor.
+const LIMITS = { n: 16, title: 160, note: 4000, s: 240, i: 160 };
+const MAX_SECTIONS = 200;
+const MAX_ITEMS_PER_SECTION = 1000;
+const MAX_TOTAL_ITEMS = 4000;
 
 /* ---------- state ---------- */
 
-// { rev: n, updated: epochMs, items: { <id>: { c: bool, t: epochMs } } }
+// { rev, updated, items: { <id>: { c: bool, t: epochMs } } }
 let state = { rev: 0, updated: 0, items: {} };
+// { rev, updated, sections: [ { id, n, title, core, flag, note, items: [...] } ] }
+let list = { rev: 0, updated: 0, sections: [] };
 
-// Serialises writes. Concurrent PATCHes from two devices would otherwise
-// interleave read-modify-write and lose one of them.
+// Serialises writes. Concurrent requests would otherwise interleave
+// read-modify-write and lose one of them.
 let writeChain = Promise.resolve();
 
-async function loadState() {
+async function readJson(file) {
   try {
-    const raw = await readFile(STATE_FILE, "utf8");
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && parsed.items) {
-      state = {
-        rev: Number(parsed.rev) || 0,
-        updated: Number(parsed.updated) || 0,
-        items: parsed.items,
-      };
-    }
-    console.log(`loaded ${Object.keys(state.items).length} items (rev ${state.rev})`);
+    return JSON.parse(await readFile(file, "utf8"));
   } catch (err) {
-    if (err.code !== "ENOENT") {
-      // A corrupt file must not be silently replaced by an empty one — that
-      // reads as "checklist reset itself" and the ticks are gone for good.
-      console.error(`refusing to start: ${STATE_FILE} is unreadable —`, err.message);
-      process.exit(1);
-    }
-    console.log("no state file yet — starting empty");
+    if (err.code === "ENOENT") return null;
+    // A corrupt file must not be silently replaced by an empty one — that
+    // reads as "the checklist reset itself" and the data is gone for good.
+    console.error(`refusing to start: ${file} is unreadable —`, err.message);
+    process.exit(1);
   }
 }
 
-// Write to a temp file and rename: rename is atomic within a filesystem, so a
-// power cut can leave the old state or the new one, never a half-written file.
-function persist() {
-  writeChain = writeChain.then(async () => {
-    const tmp = `${STATE_FILE}.tmp`;
-    await writeFile(tmp, JSON.stringify(state), "utf8");
-    await rename(tmp, STATE_FILE);
-  }).catch((err) => {
-    console.error("persist failed:", err.message);
-  });
+function persist(file, doc) {
+  writeChain = writeChain
+    .then(async () => {
+      const tmp = `${file}.tmp`;
+      await writeFile(tmp, JSON.stringify(doc), "utf8");
+      await rename(tmp, file); // atomic within a filesystem
+    })
+    .catch((err) => console.error(`persist ${file} failed:`, err.message));
   return writeChain;
 }
 
+async function load() {
+  const savedState = await readJson(STATE_FILE);
+  if (savedState && savedState.items) {
+    state = {
+      rev: Number(savedState.rev) || 0,
+      updated: Number(savedState.updated) || 0,
+      items: savedState.items,
+    };
+  }
+
+  const savedList = await readJson(LIST_FILE);
+  if (savedList && Array.isArray(savedList.sections)) {
+    list = {
+      rev: Number(savedList.rev) || 0,
+      updated: Number(savedList.updated) || 0,
+      sections: savedList.sections,
+    };
+    console.log(`list: ${list.sections.length} sections (rev ${list.rev})`);
+  } else {
+    const seed = await readJson(SEED_FILE);
+    if (!seed) {
+      console.error(`refusing to start: no ${LIST_FILE} and no seed at ${SEED_FILE}`);
+      process.exit(1);
+    }
+    list = { rev: 0, updated: Date.now(), sections: seed.sections };
+    await persist(LIST_FILE, list);
+    console.log(`list: seeded ${list.sections.length} sections from ${SEED_FILE}`);
+  }
+
+  console.log(`state: ${Object.keys(state.items).length} items (rev ${state.rev})`);
+}
+
+/* ---------- ticks ---------- */
+
 // Per-item last-write-wins. This is what makes two devices safe: a full-state
-// PUT from a phone that was offline would revert ticks made on the laptop,
+// save from a phone that was offline would revert ticks made on the laptop,
 // whereas merging per item by timestamp only ever loses the older edit of the
 // same item.
 function applyOps(ops) {
@@ -99,9 +145,100 @@ function applyOps(ops) {
   if (changed) {
     state.rev++;
     state.updated = now;
-    persist();
+    persist(STATE_FILE, state);
   }
   return changed;
+}
+
+/* ---------- list ---------- */
+
+class Invalid extends Error {
+  constructor(message) {
+    super(message);
+    this.status = 400;
+  }
+}
+
+function str(value, field, max, { required = false } = {}) {
+  if (value === undefined || value === null) value = "";
+  if (typeof value !== "string") throw new Invalid(`${field} must be a string`);
+  const trimmed = value.trim();
+  if (required && !trimmed) throw new Invalid(`${field} is required`);
+  if (trimmed.length > max) throw new Invalid(`${field} exceeds ${max} characters`);
+  // Control characters would render as invisible junk and can't be typed
+  // deliberately; strip rather than reject so a paste from a PDF still works.
+  let clean = "";
+  for (const ch of trimmed) {
+    const code = ch.codePointAt(0);
+    if (code >= 32 && code !== 127) clean += ch;
+  }
+  return clean;
+}
+
+function validateList(input) {
+  if (!input || typeof input !== "object") throw new Invalid("expected an object");
+  if (!Array.isArray(input.sections)) throw new Invalid("sections must be an array");
+  if (input.sections.length > MAX_SECTIONS) throw new Invalid("too many sections");
+
+  const seen = new Set();
+  let total = 0;
+
+  const sections = input.sections.map((sec, si) => {
+    if (!sec || typeof sec !== "object") throw new Invalid(`section ${si} is not an object`);
+    if (typeof sec.id !== "string" || !ID_RE.test(sec.id)) throw new Invalid(`section ${si} has an invalid id`);
+    // A duplicate id makes two rows tick as one, and is unrecoverable once
+    // ticks accumulate against it.
+    if (seen.has(sec.id)) throw new Invalid(`duplicate id ${sec.id}`);
+    seen.add(sec.id);
+
+    if (!Array.isArray(sec.items)) throw new Invalid(`section ${si} has no items array`);
+    if (sec.items.length > MAX_ITEMS_PER_SECTION) throw new Invalid(`section ${si} has too many items`);
+    total += sec.items.length;
+    if (total > MAX_TOTAL_ITEMS) throw new Invalid("too many items in total");
+
+    return {
+      id: sec.id,
+      n: str(sec.n, `section ${si} number`, LIMITS.n),
+      title: str(sec.title, `section ${si} title`, LIMITS.title, { required: true }),
+      core: !!sec.core,
+      flag: !!sec.flag,
+      note: str(sec.note, `section ${si} note`, LIMITS.note),
+      items: sec.items.map((it, ii) => {
+        if (!it || typeof it !== "object") throw new Invalid(`item ${si}.${ii} is not an object`);
+        if (typeof it.id !== "string" || !ID_RE.test(it.id)) throw new Invalid(`item ${si}.${ii} has an invalid id`);
+        if (seen.has(it.id)) throw new Invalid(`duplicate id ${it.id}`);
+        seen.add(it.id);
+        return {
+          id: it.id,
+          s: str(it.s, `item ${si}.${ii} series`, LIMITS.s, { required: true }),
+          i: str(it.i, `item ${si}.${ii} issue`, LIMITS.i),
+          note: str(it.note, `item ${si}.${ii} note`, LIMITS.note),
+          alt: !!it.alt,
+        };
+      }),
+    };
+  });
+
+  return sections;
+}
+
+// A tick for a row that no longer exists is invisible but would come back to
+// life if the same id were ever reused, so drop it with the row.
+function purgeOrphanTicks(sections) {
+  const live = new Set(sections.flatMap((sec) => sec.items.map((it) => it.id)));
+  let dropped = 0;
+  for (const id of Object.keys(state.items)) {
+    if (!live.has(id)) {
+      delete state.items[id];
+      dropped++;
+    }
+  }
+  if (dropped) {
+    state.rev++;
+    state.updated = Date.now();
+    persist(STATE_FILE, state);
+  }
+  return dropped;
 }
 
 /* ---------- http ---------- */
@@ -113,6 +250,7 @@ const MIME = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
   ".txt": "text/plain; charset=utf-8",
 };
 
@@ -150,8 +288,20 @@ function readBody(req) {
   });
 }
 
+async function parseBody(req) {
+  const raw = await readBody(req);
+  try {
+    return JSON.parse(raw || "{}");
+  } catch {
+    throw new Invalid("invalid json");
+  }
+}
+
 async function serveStatic(res, urlPath) {
-  const rel = urlPath === "/" ? "index.html" : normalize(urlPath).replace(/^(\.\.[/\\])+/, "").replace(/^\/+/, "");
+  const rel =
+    urlPath === "/"
+      ? "index.html"
+      : normalize(urlPath).replace(/^(\.\.[/\\])+/, "").replace(/^\/+/, "");
   const full = join(PUBLIC_DIR, rel);
   if (!full.startsWith(PUBLIC_DIR)) return send(res, 403, "forbidden");
 
@@ -164,11 +314,10 @@ async function serveStatic(res, urlPath) {
       return send(res, 404, "not found", { "content-type": MIME[".txt"] });
     }
   }
-  const type = MIME[extname(full)] || "application/octet-stream";
   // The page is the app: never cache it, or a stale shell keeps talking to a
-  // newer API. Assets are content-free enough that no-store costs nothing here.
+  // newer API.
   send(res, 200, buf, {
-    "content-type": type,
+    "content-type": MIME[extname(full)] || "application/octet-stream",
     "content-security-policy":
       "default-src 'self'; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
@@ -186,31 +335,60 @@ const server = createServer(async (req, res) => {
 
   try {
     if (path === "/healthz") {
-      return sendJson(res, 200, { ok: true, rev: state.rev, items: Object.keys(state.items).length });
+      return sendJson(res, 200, {
+        ok: true,
+        rev: state.rev,
+        items: Object.keys(state.items).length,
+        listRev: list.rev,
+        sections: list.sections.length,
+      });
     }
 
     if (path === "/api/state") {
-      if (req.method === "GET") {
-        return sendJson(res, 200, state);
-      }
+      if (req.method === "GET") return sendJson(res, 200, state);
       if (req.method === "PATCH" || req.method === "POST") {
-        const raw = await readBody(req);
-        let payload;
-        try {
-          payload = JSON.parse(raw || "{}");
-        } catch {
-          return sendJson(res, 400, { error: "invalid json" });
-        }
+        const payload = await parseBody(req);
         const ops = Array.isArray(payload.ops) ? payload.ops : null;
-        if (!ops) return sendJson(res, 400, { error: "expected { ops: [...] }" });
+        if (!ops) throw new Invalid("expected { ops: [...] }");
         if (ops.length > MAX_OPS) return sendJson(res, 413, { error: "too many ops" });
 
         const changed = applyOps(ops);
-        // Flush before answering. The client treats a 200 as "the server owns
+        // Flush before answering: the client treats a 200 as "the server owns
         // these ops now" and drops them from its queue.
         await writeChain;
         console.log(`patch: ${ops.length} ops, ${changed} applied, rev ${state.rev}`);
         return sendJson(res, 200, state);
+      }
+      return sendJson(res, 405, { error: "method not allowed" });
+    }
+
+    if (path === "/api/list") {
+      if (req.method === "GET") return sendJson(res, 200, list);
+      if (req.method === "PUT") {
+        const payload = await parseBody(req);
+
+        // Optimistic concurrency. Without this, a phone showing yesterday's
+        // list would quietly delete every section added since.
+        if (Number(payload.rev) !== list.rev) {
+          return sendJson(res, 409, {
+            error: "the list changed elsewhere",
+            rev: list.rev,
+            updated: list.updated,
+            sections: list.sections,
+          });
+        }
+
+        const sections = validateList(payload);
+        list = { rev: list.rev + 1, updated: Date.now(), sections };
+        persist(LIST_FILE, list);
+        const dropped = purgeOrphanTicks(sections);
+        await writeChain;
+        console.log(
+          `list: rev ${list.rev}, ${sections.length} sections, ` +
+            `${sections.reduce((n, s) => n + s.items.length, 0)} items` +
+            (dropped ? `, ${dropped} orphan ticks dropped` : "")
+        );
+        return sendJson(res, 200, list);
       }
       return sendJson(res, 405, { error: "method not allowed" });
     }
@@ -225,7 +403,7 @@ const server = createServer(async (req, res) => {
 });
 
 await mkdir(DATA_DIR, { recursive: true });
-await loadState();
+await load();
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`secret-wars listening on :${PORT} (data: ${DATA_DIR})`);

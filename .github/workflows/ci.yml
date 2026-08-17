@@ -19,6 +19,7 @@ jobs:
           node-version: 22
       - run: node --check server.mjs
       - run: node test/sync.test.mjs
+      - run: node test/list.test.mjs
 
   image:
     # The deployment target auto-pulls :latest, so merging to main deploys.

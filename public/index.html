@@ -101,11 +101,11 @@
   }
 
   ul.list{list-style:none;margin:12px 0 0;padding:0}
-  li.row{border-bottom:1px solid var(--hair)}
+  li.row{border-bottom:1px solid var(--hair);display:flex;align-items:center}
   li.row label{
-    display:flex;align-items:center;gap:14px;padding:11px 6px;cursor:pointer;
+    display:flex;align-items:center;gap:14px;padding:11px 6px;cursor:pointer;flex:1;min-width:0;
   }
-  li.row input{position:absolute;opacity:0;width:0;height:0}
+  li.row input[type=checkbox]{position:absolute;opacity:0;width:0;height:0}
   .box{
     flex:0 0 auto;width:20px;height:20px;border:1.5px solid var(--ink);
     background:transparent;position:relative;transition:background .12s ease;
@@ -116,7 +116,7 @@
   }
   input:checked + .box::after{transform:scale(1)}
   input:focus-visible + .box{outline:3px solid var(--blue);outline-offset:2px}
-  .title{flex:1;font-weight:500}
+  .title{flex:1;font-weight:500;min-width:0}
   .issue{
     font-family:var(--mono);font-weight:600;font-size:14px;white-space:nowrap;
   }
@@ -130,6 +130,45 @@
   li.row.alt .title{color:var(--blue)}
   li.row.alt input:checked ~ .title{color:var(--ink-soft)}
 
+  /* ---------- edit mode ---------- */
+  .tools{display:none;gap:4px;padding:0 4px;flex:0 0 auto}
+  body.editing .tools{display:flex}
+  .tool{
+    font-family:var(--mono);font-size:12px;line-height:1;
+    background:transparent;color:var(--ink-soft);border:1px solid var(--hair);
+    padding:6px 7px;cursor:pointer;min-width:28px;
+  }
+  .tool:hover{border-color:var(--red);color:#fff}
+  .tool.danger:hover{border-color:var(--red);color:var(--red)}
+  .adder{display:none;margin:10px 0 0}
+  body.editing .adder{display:block}
+  .adder button{width:100%;border-style:dashed}
+
+  .form{flex:1;padding:14px 6px;display:grid;gap:10px}
+  .form .field{display:grid;gap:4px}
+  .form label.lbl{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-soft);cursor:default;padding:0;display:block;
+  }
+  .form input[type=text]{
+    font-family:var(--body);font-size:15px;color:var(--ink);
+    background:#101014;border:1px solid var(--hair);padding:9px 10px;width:100%;
+  }
+  .form input[type=text]:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
+  .form .checks{display:flex;gap:18px;flex-wrap:wrap}
+  .form .check{
+    display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);cursor:pointer;
+  }
+  .form .check input{width:16px;height:16px;accent-color:var(--red)}
+  .form .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+  .form .actions .spacer{flex:1}
+  .hint{
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink-soft);
+    border-left:3px solid var(--blue);padding-left:10px;margin:14px 0 0;display:none;
+  }
+  body.editing .hint{display:block}
+
   /* ---------- footer bar ---------- */
   .dock{
     position:fixed;left:0;right:0;bottom:0;background:#17171B;color:var(--ink);
@@ -137,8 +176,8 @@
     box-shadow:0 -14px 26px rgba(0,0,0,.55);
     padding-bottom:env(safe-area-inset-bottom);
   }
-  .dock .wrap{display:flex;align-items:center;gap:16px;padding-top:12px;padding-bottom:12px}
-  .dock .stat{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;flex:1}
+  .dock .wrap{display:flex;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px}
+  .dock .stat{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;flex:1;min-width:0}
   .dock .stat b{color:#fff;font-size:15px}
   button{
     font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
@@ -146,8 +185,14 @@
   }
   button:hover{border-color:var(--red);color:#fff}
   button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+  button[aria-pressed=true]{border-color:var(--red);color:#fff;background:#22161A}
   .savestate{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#9A9AA4}
   .savestate.warn{color:var(--red)}
+  @media(max-width:560px){
+    .dock .stat{font-size:10.5px;letter-spacing:.06em}
+    .dock .stat b{font-size:13px}
+    button{padding:8px 9px;font-size:10px;letter-spacing:.08em}
+  }
 
   footer.colophon{
     margin:44px 0 10px;padding-top:16px;border-top:1px solid var(--hair);
@@ -165,10 +210,10 @@
   <header class="mast">
     <div class="eyebrow">
       <span>Hickman&rsquo;s Avengers &rarr; Secret Wars &rarr; everything after</span>
-      <span><b>Sections 000&ndash;010</b></span>
+      <span><b id="sectionRange">&nbsp;</b></span>
     </div>
     <h1>Road to<span class="thin" style="color:#F03A41">Secret Wars</span></h1>
-    <p class="deck">The full run in reading order, issue by issue. Tick as you go &mdash; your progress syncs across every device. No plot notes, nothing spoiled.</p>
+    <p class="deck">The full run in reading order, issue by issue. Tick as you go &mdash; progress syncs across every device. Use <em>Edit list</em> in the bar below to add, change or remove entries.</p>
 
     <div class="meter" style="background:#17171B;color:#F2F1EB">
       <svg class="diagram" viewBox="0 0 130 96" aria-hidden="true">
@@ -181,12 +226,18 @@
         <div class="bar"><i id="barFill"></i></div>
       </div>
     </div>
+
+    <p class="hint">Editing. Ticks still work; changes to the list save immediately. Deleting an entry also deletes its tick.</p>
   </header>
 
   <main id="sections"></main>
 
+  <div class="adder" id="addSectionWrap">
+    <button id="addSectionBtn" type="button">+ Add section</button>
+  </div>
+
   <footer class="colophon">
-    <span>Order as supplied &mdash; unaltered</span>
+    <span>Order as supplied &mdash; yours to amend</span>
     <span>Checklist &middot; 616 &times; 1610</span>
   </footer>
 </div>
@@ -195,246 +246,66 @@
   <div class="wrap">
     <div class="stat">Main line <b id="dockMain">0/0</b> &nbsp;&middot;&nbsp; Optional <b id="dockOpt">0/0</b></div>
     <span class="savestate" id="saveState">Loading</span>
-    <button id="resetBtn" type="button">Reset all</button>
+    <button id="editBtn" type="button" aria-pressed="false">Edit list</button>
+    <button id="resetBtn" type="button">Reset ticks</button>
   </div>
 </div>
 
 <script>
-const DATA = [
-  {
-    n:"000", title:"Before the Beginning", core:false,
-    note:"Secret Wars resolves this run as much as it resolves the Avengers one &mdash; same author, same era, and threads that walk straight into the finale. Around 65 issues, and widely held to be his best Marvel work.",
-    items:[
-      {s:"Dark Reign: Fantastic Four",i:"#1&ndash;5",note:"Hickman's warm-up, written before his run proper"},
-      {s:"Fantastic Four",i:"(1998) #570&ndash;588",note:"The run starts here"},
-      {s:"FF",i:"#1&ndash;11",note:"Same story, retitled"},
-      {s:"Fantastic Four #600&ndash;611 / FF #12&ndash;23",i:"alternating",note:"F4 600, FF 12, F4 601, FF 13, F4 602, FF 14, F4 603, FF 15, F4 604, FF 16, F4 605, 605.1, 606, FF 17&ndash;18, F4 607&ndash;608, FF 19&ndash;21, F4 609&ndash;610, FF 22, F4 611, FF 23"}
-    ]
-  },
-  {
-    n:"001", title:"Incursions &amp; Avengers World", core:true,
-    note:"Two titles running in parallel: Avengers goes big and outward, New Avengers stays with the Illuminati.",
-    items:[
-      {s:"New Avengers",i:"#1"},{s:"New Avengers",i:"#2"},{s:"New Avengers",i:"#3"},
-      {s:"Avengers",i:"#1"},{s:"Avengers",i:"#2"},{s:"Avengers",i:"#3"},{s:"Avengers",i:"#4"},{s:"Avengers",i:"#5"},
-      {s:"New Avengers",i:"#4"},{s:"New Avengers",i:"#5"},{s:"New Avengers",i:"#6"},
-      {s:"Avengers",i:"#6"},{s:"Avengers",i:"#7"},{s:"Avengers",i:"#8"},{s:"Avengers",i:"#9"},
-      {s:"Avengers",i:"#10"},{s:"Avengers",i:"#11"},{s:"Avengers",i:"#12"},{s:"Avengers",i:"#13"},
-      {s:"New Avengers",i:"#7"},
-      {s:"Avengers",i:"#14"},{s:"Avengers",i:"#15"},{s:"Avengers",i:"#16"},{s:"Avengers",i:"#17",note:"Leads straight into Infinity"}
-    ]
-  },
-  {
-    n:"002", title:"Infinity", core:true,
-    note:"The six-issue event miniseries interleaves with both ongoings. This is the published reading order.",
-    items:[
-      {s:"Free Comic Book Day 2013",i:"Infinity #1",note:"Hickman prologue"},
-      {s:"Infinity",i:"#1"},
-      {s:"New Avengers",i:"#8"},{s:"New Avengers",i:"#9"},
-      {s:"Avengers",i:"#18"},
-      {s:"Infinity",i:"#2"},
-      {s:"New Avengers",i:"#10"},
-      {s:"Avengers",i:"#19"},
-      {s:"Infinity",i:"#3"},
-      {s:"Avengers",i:"#20"},
-      {s:"Infinity",i:"#4"},
-      {s:"Avengers",i:"#21"},
-      {s:"New Avengers",i:"#11"},
-      {s:"Infinity",i:"#5"},
-      {s:"Avengers",i:"#22"},{s:"Avengers",i:"#23"},
-      {s:"Infinity",i:"#6"},
-      {s:"New Avengers",i:"#12"},
-      {s:"Infinity: Against the Tide",i:"Infinite Comic #1&ndash;2",note:"Digital-first Silver Surfer side-story, set during the event"}
-    ]
-  },
-  {
-    n:"003", title:"Post-Infinity &amp; Original Sin", core:true,
-    note:"New Avengers #13 ships as #13.INH. Avengers #34.1 and #34.2 are numbered point-one issues, not misprints.",
-    items:[
-      {s:"Avengers",i:"#24"},
-      {s:"New Avengers",i:"#13",note:"Shipped as #13.INH"},{s:"New Avengers",i:"#14"},{s:"New Avengers",i:"#15"},
-      {s:"Avengers",i:"#25"},{s:"Avengers",i:"#26"},{s:"Avengers",i:"#27"},{s:"Avengers",i:"#28"},
-      {s:"New Avengers",i:"#16"},{s:"New Avengers",i:"#17"},{s:"New Avengers",i:"#18"},{s:"New Avengers",i:"#19"},
-      {s:"New Avengers",i:"#20"},{s:"New Avengers",i:"#21"},{s:"New Avengers",i:"#22"},{s:"New Avengers",i:"#23"},
-      {s:"New Avengers Annual",i:"#1",note:"Barbiere &amp; Rudy, not Hickman &mdash; fills in Doctor Strange before Time Runs Out"},
-      {s:"Original Sin",i:"#0",note:"Waid prologue"},
-      {s:"Original Sin",i:"#1"},{s:"Original Sin",i:"#2"},{s:"Original Sin",i:"#3"},{s:"Original Sin",i:"#4"},
-      {s:"Original Sin",i:"#5"},{s:"Original Sin",i:"#6"},{s:"Original Sin",i:"#7"},{s:"Original Sin",i:"#8"},
-      {s:"Avengers",i:"#29"},{s:"Avengers",i:"#30"},{s:"Avengers",i:"#31"},{s:"Avengers",i:"#32"},
-      {s:"Avengers",i:"#33"},{s:"Avengers",i:"#34"},{s:"Avengers",i:"#34.1"},{s:"Avengers",i:"#34.2"}
-    ]
-  },
-  {
-    n:"004", title:"Optional Reading", core:false,
-    note:"Side reading, not required by the main line. Issue numbers filled in so you can find them.",
-    items:[
-      {s:"Captain America (2012)",i:"#16&ndash;21",note:"Remender &mdash; The Iron Nail. Starts at #1 if you want the whole run."},
-      {s:"Thor: God of Thunder",i:"#1&ndash;25",note:"Aaron. Stops where the title becomes Thor (2014) &mdash; all you need is that Jane Foster is Thor."},
-      {s:"X-Men: Schism",i:"#1&ndash;5",note:"Cyclops vs. Wolverine."},
-      {s:"Avengers: X-Sanction",i:"#1&ndash;4"},
-      {s:"Avengers vs. X-Men",i:"#0&ndash;12"},
-      {s:"Superior Iron Man",i:"#1&ndash;9",note:"Tom Taylor. Spins out of AXIS, which is poorly regarded and skippable &mdash; all you need is that Tony came out of it inverted"},
-      {s:"Infinity Companion",i:"12 series",note:"The event's tie-ins: Captain Marvel #15&ndash;16, Thunderbolts #14&ndash;18, Avengers Assemble #18&ndash;20, Infinity: The Hunt #1&ndash;4, Mighty Avengers #1&ndash;3, Nova #8&ndash;9, Superior Spider-Man Team-Up #3&ndash;4, Infinity: Heist #1&ndash;4, Fearless Defenders #10, Secret Avengers #10&ndash;11, Guardians of the Galaxy #8&ndash;9, Wolverine &amp; the X-Men Annual #1"},
-      {s:"Ultimate Comics: Doomsday",i:"12 issues",note:"Ultimate Enemy #1&ndash;4, Ultimate Mystery #1&ndash;4, Ultimate Doom #1&ndash;4."},
-      {s:"Ultimate Comics: The Ultimates",i:"#1&ndash;12",note:"Hickman's Ultimate Universe run."}
-    ]
-  },
-  {
-    n:"005", title:"Time Runs Out", core:true,
-    note:"Strict alternation, Avengers then New Avengers, with one wobble near the end: New Avengers #31 and #32 run back to back, and Avengers #44 closes it out.",
-    items:[
-      {s:"Avengers",i:"#35"},{s:"New Avengers",i:"#24",alt:true},
-      {s:"Avengers",i:"#36"},{s:"New Avengers",i:"#25",alt:true},
-      {s:"Avengers",i:"#37"},{s:"New Avengers",i:"#26",alt:true},
-      {s:"Avengers",i:"#38"},{s:"New Avengers",i:"#27",alt:true},
-      {s:"Avengers",i:"#39"},{s:"New Avengers",i:"#28",alt:true},
-      {s:"Avengers",i:"#40"},{s:"New Avengers",i:"#29",alt:true},
-      {s:"Avengers",i:"#41"},{s:"New Avengers",i:"#30",alt:true},
-      {s:"Avengers",i:"#42"},{s:"New Avengers",i:"#31",alt:true},{s:"New Avengers",i:"#32",alt:true},
-      {s:"Avengers",i:"#43"},{s:"New Avengers",i:"#33",alt:true},
-      {s:"Avengers",i:"#44"}
-    ]
-  },
-  {
-    n:"006", title:"Secret Wars", core:true, flag:true,
-    note:"Not on your list &mdash; added because it's where the road ends. Skip the section if you only wanted the run-up.",
-    items:[
-      {s:"Secret Wars",i:"#0",note:"Free Comic Book Day 2015 prologue"},
-      {s:"Secret Wars",i:"#1"},{s:"Secret Wars",i:"#2"},{s:"Secret Wars",i:"#3"},{s:"Secret Wars",i:"#4"},
-      {s:"Secret Wars",i:"#5"},{s:"Secret Wars",i:"#6"},{s:"Secret Wars",i:"#7"},{s:"Secret Wars",i:"#8"},
-      {s:"Secret Wars",i:"#9"}
-    ]
-  },
-  {
-    n:"007", title:"Secret Wars: The Tie-Ins", core:false,
-    note:"The tie-ins worth the time, in recommended order &mdash; the weakest and least connected have been dropped. None are required. Last Days sit before and around #1; the rest fill the gap between #2 and #7; four issues are held back as epilogues.",
-    items:[
-      {s:"Captain America and the Mighty Avengers",i:"#8",note:"Last Days. Read before Secret Wars #0 &mdash; it recaps where things stand"},
-      {s:"Loki: Agent of Asgard",i:"#14&ndash;15",note:"Last Days"},
-      {s:"Captain America and the Mighty Avengers",i:"#9",note:"Last Days"},
-      {s:"Ms. Marvel",i:"#16&ndash;19",note:"Last Days"},
-      {s:"Magneto",i:"#18&ndash;21",note:"Last Days"},
-      {s:"Silk",i:"#7",note:"Last Days"},
-      {s:"Silver Surfer",i:"#13&ndash;14",note:"Last Days. Hold #15 as an epilogue"},
-      {s:"Loki: Agent of Asgard",i:"#16&ndash;17",note:"Last Days, concludes the run"},
-      {s:"Secret Wars: Battleworld",i:"#1&ndash;4",note:"After Secret Wars #2. Anthology of short domain stories"},
-      {s:"Secret Wars Journal",i:"#1&ndash;5",note:"Anthology. Sets up Siege"},
-      {s:"Master of Kung Fu",i:"#1&ndash;4",note:"After Secret Wars #3 &mdash; and everything down to Civil War below sits in this same gap"},
-      {s:"A-Force",i:"#1&ndash;4",note:"Hold #5 as an epilogue"},
-      {s:"Planet Hulk",i:"#1&ndash;5"},
-      {s:"Spider-Verse",i:"#1&ndash;5"},
-      {s:"M.O.D.O.K.: Assassin",i:"#1&ndash;5",note:"Fits entirely before Secret Wars #4"},
-      {s:"Old Man Logan",i:"#1&ndash;4",note:"Hold #5 as an epilogue"},
-      {s:"Infinity Gauntlet",i:"#1&ndash;5"},
-      {s:"X-Men &rsquo;92",i:"#1&ndash;4",note:"Originally a digital Infinite Comic"},
-      {s:"Years of Future Past",i:"#1&ndash;5"},
-      {s:"Giant-Size Little Marvel: AvX",i:"#1&ndash;4"},
-      {s:"Amazing Spider-Man: Renew Your Vows",i:"#1&ndash;5"},
-      {s:"Armor Wars",i:"#1/2, #1&ndash;5",note:"The half issue was a Toys R Us exclusive"},
-      {s:"Marvel Zombies",i:"#1&ndash;4"},
-      {s:"Weirdworld",i:"#1&ndash;4",note:"Hold #5 as an epilogue"},
-      {s:"Captain Marvel and the Carol Corps",i:"#1&ndash;4"},
-      {s:"1872",i:"#1&ndash;4"},
-      {s:"Runaways",i:"#1&ndash;4"},
-      {s:"Squadron Sinister",i:"#1&ndash;4"},
-      {s:"Age of Ultron vs. Marvel Zombies",i:"#1&ndash;4"},
-      {s:"E Is for Extinction",i:"#1&ndash;4"},
-      {s:"Korvac Saga",i:"#1&ndash;4"},
-      {s:"Guardians of Knowhere",i:"#1&ndash;4"},
-      {s:"Civil War",i:"(2015) #1&ndash;5"},
-      {s:"Star-Lord and Kitty Pryde",i:"#1&ndash;3",note:"After Secret Wars #4 &mdash; and so is everything down to Hank Johnson below"},
-      {s:"Red Skull",i:"#1&ndash;3"},
-      {s:"Spider-Island",i:"#1&ndash;5"},
-      {s:"Inhumans: Attilan Rising",i:"#1&ndash;5"},
-      {s:"Captain Britain and the Mighty Defenders",i:"#1&ndash;2",note:"Ewing &amp; Davis"},
-      {s:"Age of Apocalypse",i:"(2015) #1&ndash;5"},
-      {s:"Hail Hydra",i:"#1&ndash;4",note:"Remender, carries threads from his Captain America"},
-      {s:"House of M",i:"(2015) #1&ndash;4"},
-      {s:"Siege",i:"#1&ndash;4",note:"After Secret Wars #6. The closest tie-in to the main story"},
-      {s:"Secret Wars: Agents of Atlas",i:"#1"},
-      {s:"Thors",i:"#1&ndash;4",note:"Aaron. Battleworld police procedural"},
-      {s:"A-Force",i:"#5",note:"Epilogue"},
-      {s:"Old Man Logan",i:"#5",note:"Epilogue"},
-      {s:"Weirdworld",i:"#5",note:"Epilogue"},
-      {s:"Silver Surfer",i:"#15",note:"Epilogue"}
-    ]
-  },
-  {
-    n:"008", title:"After the Collapse", core:true,
-    note:"All-New, All-Different Marvel, 2015&ndash;16. These are the books that pick up the loose threads rather than the whole relaunch.",
-    items:[
-      {s:"Avengers",i:"(2015) #0",note:"Anthology prologue to the new status quo"},
-      {s:"All-New, All-Different Avengers",i:"#1&ndash;15, Annual #1"},
-      {s:"New Avengers",i:"(2015) #1&ndash;18",note:"Ewing. Same title, new team, new premise"},
-      {s:"Ultimates",i:"(2015) #1&ndash;12",note:"Ewing picks up the cosmology Hickman left behind"},
-      {s:"Ultimates 2",i:"#1&ndash;9, #100",note:"Direct continuation"},
-      {s:"U.S.Avengers",i:"the run",note:"Ewing's follow-on to his New Avengers"},
-      {s:"Contest of Champions",i:"(2015) #1&ndash;10",note:"Ewing. Set on the Battlerealm &mdash; what's left of Battleworld"},
-      {s:"Squadron Supreme",i:"(2015) the run",note:"Survivors of universes that didn't make it back"},
-      {s:"Infamous Iron Man",i:"#1&ndash;12",note:"Bendis &amp; Maleev &mdash; where Doom goes next"},
-      {s:"Doctor Doom",i:"(2019) the run",note:"Cantwell. The Doom thread between Infamous Iron Man and One World Under Doom"},
-      {s:"Marvel Two-in-One",i:"#1&ndash;12",note:"Zdarsky. Ben and Johnny looking for the rest of the family"},
-      {s:"Fantastic Four",i:"(2018) #1 onward",note:"Slott. Pays off what Two-in-One is searching for"},
-      {s:"Defenders",i:"(2021) #1&ndash;5",note:"Ewing. The cosmos that came before this one"},
-      {s:"Defenders: Beyond",i:"(2022) #1&ndash;5",note:"Closes the loop on the Ultimates cosmology"}
-    ]
-  },
-  {
-    n:"009", title:"The Maker's Second Universe", core:true,
-    note:"The most direct continuation of all &mdash; the Ultimate thread, restarted by Hickman eight years later.",
-    items:[
-      {s:"Ultimate Invasion",i:"#1&ndash;4",note:"Hickman &amp; Hitch. The Illuminati reassemble"},
-      {s:"Ultimate Universe",i:"#1",note:"One-shot bridge into the new line"},
-      {s:"Ultimate Spider-Man",i:"(2024) #1&ndash;24",note:"Hickman"},
-      {s:"Ultimates",i:"(2024) #1&ndash;24",note:"Deniz Camp"},
-      {s:"Ultimate Universe: One Year In",i:"#1",note:"Read after the first year of the line"},
-      {s:"Ultimate Universe: Two Years In",i:"#1"},
-      {s:"Ultimate Spider-Man: Incursion",i:"the mini",note:"Miles crosses back to 616"},
-      {s:"Ultimate Universe: Finale",i:"(2026) #1",note:"The line closes out"}
-    ]
-  },
-  {
-    n:"010", title:"Where It Stands", core:true,
-    note:"Current as of mid-2026, so this end of the list is still moving.",
-    items:[
-      {s:"One World Under Doom",i:"#1&ndash;9",note:"Ryan North. Doom on the throne again, ten years on"}
-    ]
-  }
-];
-
 /* ---------------------------------------------------------------------------
-   Sync layer.
+   Two documents, two concurrency models — see the header of server.mjs.
 
-   The artifact version of this page used window.storage, which only exists
-   inside Claude. Self-hosted, state lives on the server (GET /api/state,
-   PATCH /api/state) so every device sees the same list.
+     ticks  (/api/state)  change constantly, from any device. They travel as
+                          per-item ops with timestamps and merge last-write-wins,
+                          so two devices can never revert each other. Unsent ops
+                          queue in localStorage and retry when the network is back.
 
-   Three rules make multi-device safe:
-     1. Ticks travel as OPS ({id, checked, when}), never as a whole-state PUT.
-        A phone that was offline for a week would otherwise revert everything
-        ticked on the laptop meanwhile.
-     2. The server merges per item, last-write-wins by timestamp.
-     3. Unsent ops are queued in localStorage, so a tick made on the subway
-        lands the next time the page is opened on the network.
+     list   (/api/list)   changes rarely and deliberately. It is written whole,
+                          guarded by a revision number: if the server has moved
+                          on, the write is refused and we reload rather than
+                          clobber an edit made elsewhere.
 
-   localStorage also mirrors the last known server state, so the page paints
-   instantly and still shows progress if the hub is unreachable.
+   Item ids are FROZEN and never derived from the text, which is what lets you
+   rename an entry without losing its tick.
 --------------------------------------------------------------------------- */
 
-const API = "/api/state";
+const API_STATE = "/api/state";
+const API_LIST = "/api/list";
 const MIRROR_KEY = "rtsw:mirror:v1";
 const PENDING_KEY = "rtsw:pending:v1";
+const LIST_KEY = "rtsw:list:v1";
 const POLL_MS = 60000;
 
-const slug = t => t.replace(/&[a-z]+;/g,"-").replace(/[^a-zA-Z0-9]+/g,"-").toLowerCase();
-
-let items = {};          // id -> {c:bool, t:epochMs}  — last known merged truth
-let pending = [];        // ops not yet accepted by the server
+let list = { rev: 0, sections: [] };
+let items = {};        // id -> {c,t}  — last known tick truth
+let pending = [];      // tick ops not yet accepted by the server
 let syncing = false;
-let dirty = false;       // a change arrived mid-flight; sync again when done
+let dirty = false;
 let syncTimer = null;
+let editing = false;
+let editTarget = null; // {kind:"item"|"section", id} currently open in a form
 
-const stateEl = () => document.getElementById("saveState");
+const host = document.getElementById("sections");
+const stateEl = document.getElementById("saveState");
+
+/* ---------- small helpers ---------- */
+
+function el(tag, cls, text){
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  // textContent, never innerHTML: every string below is user-editable now.
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+function tool(label, title, onClick, danger){
+  const b = el("button", "tool" + (danger ? " danger" : ""), label);
+  b.type = "button";
+  b.title = title;
+  b.setAttribute("aria-label", title);
+  b.addEventListener("click", onClick);
+  return b;
+}
 
 function lsGet(key, fallback){
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
@@ -444,10 +315,15 @@ function lsSet(key, value){
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
+function newId(){
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return "x-" + Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+}
+
 function status(text, warn){
-  const el = stateEl();
-  el.textContent = text;
-  el.classList.toggle("warn", !!warn);
+  stateEl.textContent = text;
+  stateEl.classList.toggle("warn", !!warn);
 }
 
 function statusIdle(){
@@ -456,64 +332,277 @@ function statusIdle(){
   else status("Synced");
 }
 
-// Fold the server's view and our unsent ops into one map, newest edit per item.
-function mergeInto(base, ops){
-  for (const op of ops){
-    const cur = base[op.id];
-    if (!cur || op.t >= cur.t) base[op.id] = { c: op.c, t: op.t };
-  }
-  return base;
-}
+/* ---------- rendering ---------- */
 
-/* ---------- render ---------- */
-const host = document.getElementById("sections");
-DATA.forEach((sec, si) => {
-  const el = document.createElement("section");
-  el.className = "blk";
-  el.innerHTML =
-    '<div class="blk-head"><span class="num" style="color:#F03A41">' + sec.n + '</span>' +
-    '<h2>' + sec.title + '</h2>' +
-    '<span class="tally" data-tally="' + si + '"></span></div>' +
-    '<p class="blk-note' + (sec.flag ? ' flag' : '') + '">' + sec.note + '</p>' +
-    '<ul class="list"></ul>';
-  const ul = el.querySelector("ul");
-  sec.items.forEach(it => {
-    const id = slug(sec.n + "-" + it.s + "-" + it.i);
-    const li = document.createElement("li");
-    li.className = "row" + (it.alt ? " alt" : "");
-    li.innerHTML =
-      '<label><input type="checkbox" data-id="' + id + '" data-sec="' + si + '">' +
-      '<span class="box"></span>' +
-      '<span class="title" style="color:inherit">' + it.s + (it.note ? '<span class="note">' + it.note + '</span>' : '') + '</span>' +
-      '<span class="issue" style="color:inherit">' + it.i + '</span></label>';
-    ul.appendChild(li);
+function itemForm(sec, it){
+  const form = el("div", "form");
+  const fields = {};
+
+  const field = (key, label, value) => {
+    const wrap = el("div", "field");
+    const lbl = el("label", "lbl", label);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = value || "";
+    lbl.appendChild(input);
+    wrap.appendChild(lbl);
+    fields[key] = input;
+    return wrap;
+  };
+
+  form.appendChild(field("s", "Series", it.s));
+  form.appendChild(field("i", "Issue", it.i));
+  form.appendChild(field("note", "Note", it.note));
+
+  const checks = el("div", "checks");
+  const altLabel = el("label", "check");
+  const alt = document.createElement("input");
+  alt.type = "checkbox";
+  alt.checked = !!it.alt;
+  altLabel.appendChild(alt);
+  altLabel.appendChild(el("span", null, "Alternate tint"));
+  checks.appendChild(altLabel);
+  form.appendChild(checks);
+
+  const actions = el("div", "actions");
+  const save = el("button", "tool", "Save");
+  save.type = "button";
+  save.addEventListener("click", () => {
+    if (!fields.s.value.trim()) { fields.s.focus(); return; }
+    it.s = fields.s.value;
+    it.i = fields.i.value;
+    it.note = fields.note.value;
+    it.alt = alt.checked;
+    editTarget = null;
+    commitList();
   });
-  host.appendChild(el);
-});
+  const cancel = el("button", "tool", "Cancel");
+  cancel.type = "button";
+  cancel.addEventListener("click", () => {
+    editTarget = null;
+    // The row may be a brand-new blank entry; reload drops it cleanly.
+    loadList().then(renderAll);
+  });
+  const del = el("button", "tool danger", "Delete");
+  del.type = "button";
+  del.addEventListener("click", () => {
+    if (!confirm("Delete “" + (it.s || "this entry") + "” and its tick?")) return;
+    sec.items = sec.items.filter(x => x.id !== it.id);
+    delete items[it.id];
+    editTarget = null;
+    commitList();
+  });
 
-const boxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
-const coreIds = new Set();
-DATA.forEach(sec => { if (sec.core) sec.items.forEach(it => coreIds.add(slug(sec.n + "-" + it.s + "-" + it.i))); });
-const coreTotal = coreIds.size;
-const optTotal = boxes.length - coreTotal;
+  actions.appendChild(save);
+  actions.appendChild(cancel);
+  actions.appendChild(el("span", "spacer"));
+  actions.appendChild(del);
+  form.appendChild(actions);
 
-/* ---------- paint ---------- */
-function applyToBoxes(){
-  boxes.forEach(b => { b.checked = !!(items[b.dataset.id] && items[b.dataset.id].c); });
+  setTimeout(() => fields.s.focus(), 0);
+  return form;
 }
+
+function sectionForm(sec){
+  const form = el("div", "form");
+  const fields = {};
+
+  const field = (key, label, value) => {
+    const wrap = el("div", "field");
+    const lbl = el("label", "lbl", label);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = value || "";
+    lbl.appendChild(input);
+    wrap.appendChild(lbl);
+    fields[key] = input;
+    return wrap;
+  };
+
+  form.appendChild(field("n", "Number", sec.n));
+  form.appendChild(field("title", "Title", sec.title));
+  form.appendChild(field("note", "Note", sec.note));
+
+  const checks = el("div", "checks");
+  const coreLabel = el("label", "check");
+  const core = document.createElement("input");
+  core.type = "checkbox";
+  core.checked = !!sec.core;
+  coreLabel.appendChild(core);
+  coreLabel.appendChild(el("span", null, "Counts toward main line"));
+  const flagLabel = el("label", "check");
+  const flag = document.createElement("input");
+  flag.type = "checkbox";
+  flag.checked = !!sec.flag;
+  flagLabel.appendChild(flag);
+  flagLabel.appendChild(el("span", null, "Flagged note"));
+  checks.appendChild(coreLabel);
+  checks.appendChild(flagLabel);
+  form.appendChild(checks);
+
+  const actions = el("div", "actions");
+  const save = el("button", "tool", "Save");
+  save.type = "button";
+  save.addEventListener("click", () => {
+    if (!fields.title.value.trim()) { fields.title.focus(); return; }
+    sec.n = fields.n.value;
+    sec.title = fields.title.value;
+    sec.note = fields.note.value;
+    sec.core = core.checked;
+    sec.flag = flag.checked;
+    editTarget = null;
+    commitList();
+  });
+  const cancel = el("button", "tool", "Cancel");
+  cancel.type = "button";
+  cancel.addEventListener("click", () => {
+    editTarget = null;
+    loadList().then(renderAll);
+  });
+  const del = el("button", "tool danger", "Delete section");
+  del.type = "button";
+  del.addEventListener("click", () => {
+    const n = sec.items.length;
+    if (!confirm("Delete “" + sec.title + "”" + (n ? " and its " + n + " entries" : "") + "?")) return;
+    sec.items.forEach(it => { delete items[it.id]; });
+    list.sections = list.sections.filter(s => s.id !== sec.id);
+    editTarget = null;
+    commitList();
+  });
+
+  actions.appendChild(save);
+  actions.appendChild(cancel);
+  actions.appendChild(el("span", "spacer"));
+  actions.appendChild(del);
+  form.appendChild(actions);
+
+  setTimeout(() => fields.title.focus(), 0);
+  return form;
+}
+
+function move(arr, index, delta){
+  const next = index + delta;
+  if (next < 0 || next >= arr.length) return false;
+  const [moved] = arr.splice(index, 1);
+  arr.splice(next, 0, moved);
+  return true;
+}
+
+function itemRow(sec, it, si, ii){
+  const li = el("li", "row" + (it.alt ? " alt" : ""));
+
+  if (editTarget && editTarget.kind === "item" && editTarget.id === it.id) {
+    li.appendChild(itemForm(sec, it));
+    return li;
+  }
+
+  const label = el("label");
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.dataset.id = it.id;
+  box.dataset.sec = String(si);
+  box.checked = !!(items[it.id] && items[it.id].c);
+  label.appendChild(box);
+  label.appendChild(el("span", "box"));
+
+  const title = el("span", "title", it.s);
+  if (it.note) title.appendChild(el("span", "note", it.note));
+  label.appendChild(title);
+  label.appendChild(el("span", "issue", it.i));
+  li.appendChild(label);
+
+  const tools = el("div", "tools");
+  tools.appendChild(tool("↑", "Move up", () => {
+    if (move(sec.items, ii, -1)) commitList();
+  }));
+  tools.appendChild(tool("↓", "Move down", () => {
+    if (move(sec.items, ii, 1)) commitList();
+  }));
+  tools.appendChild(tool("✎", "Edit entry", () => {
+    editTarget = { kind: "item", id: it.id };
+    renderAll();
+  }));
+  li.appendChild(tools);
+
+  return li;
+}
+
+function sectionBlock(sec, si){
+  const blk = el("section", "blk");
+
+  const head = el("div", "blk-head");
+  head.appendChild(el("span", "num", sec.n));
+  const h2 = el("h2", null, sec.title);
+  head.appendChild(h2);
+  const tally = el("span", "tally");
+  tally.dataset.tally = String(si);
+  head.appendChild(tally);
+
+  const headTools = el("div", "tools");
+  headTools.appendChild(tool("↑", "Move section up", () => {
+    if (move(list.sections, si, -1)) commitList();
+  }));
+  headTools.appendChild(tool("↓", "Move section down", () => {
+    if (move(list.sections, si, 1)) commitList();
+  }));
+  headTools.appendChild(tool("✎", "Edit section", () => {
+    editTarget = { kind: "section", id: sec.id };
+    renderAll();
+  }));
+  head.appendChild(headTools);
+  blk.appendChild(head);
+
+  if (editTarget && editTarget.kind === "section" && editTarget.id === sec.id) {
+    blk.appendChild(sectionForm(sec));
+  } else if (sec.note) {
+    blk.appendChild(el("p", "blk-note" + (sec.flag ? " flag" : ""), sec.note));
+  }
+
+  const ul = el("ul", "list");
+  sec.items.forEach((it, ii) => ul.appendChild(itemRow(sec, it, si, ii)));
+  blk.appendChild(ul);
+
+  const adder = el("div", "adder");
+  const add = el("button", null, "+ Add entry to " + sec.title);
+  add.type = "button";
+  add.addEventListener("click", () => {
+    const it = { id: newId(), s: "", i: "", note: "", alt: false };
+    sec.items.push(it);
+    editTarget = { kind: "item", id: it.id };
+    renderAll();
+  });
+  adder.appendChild(add);
+  blk.appendChild(adder);
+
+  return blk;
+}
+
+function renderAll(){
+  host.textContent = "";
+  list.sections.forEach((sec, si) => host.appendChild(sectionBlock(sec, si)));
+  paint();
+}
+
+/* ---------- progress ---------- */
 
 function paint(){
-  let coreDone = 0, optDone = 0;
-  const per = DATA.map(() => 0);
-  boxes.forEach(b => {
-    if (!b.checked) return;
-    per[+b.dataset.sec]++;
-    if (coreIds.has(b.dataset.id)) coreDone++; else optDone++;
+  let coreDone = 0, coreTotal = 0, optDone = 0, optTotal = 0;
+
+  list.sections.forEach((sec, si) => {
+    let done = 0;
+    sec.items.forEach(it => {
+      const ticked = !!(items[it.id] && items[it.id].c);
+      if (ticked) done++;
+      if (sec.core) { coreTotal++; if (ticked) coreDone++; }
+      else { optTotal++; if (ticked) optDone++; }
+    });
+    const tally = host.querySelector('[data-tally="' + si + '"]');
+    if (tally) {
+      tally.textContent =
+        String(done).padStart(2, "0") + " / " + String(sec.items.length).padStart(2, "0");
+    }
   });
-  DATA.forEach((sec, si) => {
-    document.querySelector('[data-tally="' + si + '"]').textContent =
-      String(per[si]).padStart(2, "0") + " / " + String(sec.items.length).padStart(2, "0");
-  });
+
   const pct = coreTotal ? coreDone / coreTotal : 0;
   document.getElementById("count").innerHTML = coreDone + "<span> / " + coreTotal + "</span>";
   document.getElementById("pctLabel").textContent = Math.round(pct * 100) + "% convergence · main line";
@@ -522,9 +611,80 @@ function paint(){
   document.getElementById("dockOpt").textContent = optDone + "/" + optTotal;
   document.getElementById("c616").setAttribute("transform", "translate(" + (23 * pct) + ",0)");
   document.getElementById("c1610").setAttribute("transform", "translate(" + (-23 * pct) + ",0)");
+
+  const numbers = list.sections.map(s => s.n).filter(Boolean);
+  document.getElementById("sectionRange").textContent =
+    numbers.length ? "Sections " + numbers[0] + "–" + numbers[numbers.length - 1] : "";
 }
 
-/* ---------- sync ---------- */
+/* ---------- list sync ---------- */
+
+async function loadList(){
+  try {
+    const res = await fetch(API_LIST, { headers: { accept: "application/json" } });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const doc = await res.json();
+    list = { rev: doc.rev, sections: doc.sections };
+    lsSet(LIST_KEY, list);
+    return true;
+  } catch {
+    return false; // the mirror already on screen stays valid
+  }
+}
+
+// Writes the whole list, guarded by rev. A 409 means someone else moved first.
+async function commitList(){
+  renderAll();
+  status("Saving list");
+  try {
+    const res = await fetch(API_LIST, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ rev: list.rev, sections: list.sections })
+    });
+
+    if (res.status === 409) {
+      const doc = await res.json();
+      list = { rev: doc.rev, sections: doc.sections };
+      lsSet(LIST_KEY, list);
+      editTarget = null;
+      renderAll();
+      status("List changed elsewhere — reloaded", true);
+      return;
+    }
+    if (!res.ok) {
+      let message = "Not saved";
+      try { const body = await res.json(); if (body.error) message = "Not saved: " + body.error; } catch {}
+      status(message, true);
+      await loadList();
+      renderAll();
+      return;
+    }
+
+    const doc = await res.json();
+    list = { rev: doc.rev, sections: doc.sections };
+    lsSet(LIST_KEY, list);
+    renderAll();
+    statusIdle();
+  } catch {
+    // Unlike ticks, list edits are not queued: replaying a whole-document write
+    // later would be exactly the stale-overwrite this design refuses.
+    status("Offline — list not saved", true);
+    await loadList();
+    renderAll();
+  }
+}
+
+/* ---------- tick sync ---------- */
+
+function mergeInto(base, ops){
+  for (const op of ops){
+    const cur = base[op.id];
+    if (!cur || op.t >= cur.t) base[op.id] = { c: op.c, t: op.t };
+  }
+  return base;
+}
+
 async function sync(){
   if (syncing) { dirty = true; return; }
   syncing = true;
@@ -533,18 +693,17 @@ async function sync(){
   try {
     status(flushing.length ? "Saving" : "Syncing");
     const res = flushing.length
-      ? await fetch(API, {
+      ? await fetch(API_STATE, {
           method: "PATCH",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ ops: flushing })
         })
-      : await fetch(API, { headers: { "accept": "application/json" } });
+      : await fetch(API_STATE, { headers: { accept: "application/json" } });
 
     if (!res.ok) throw new Error("HTTP " + res.status);
     const server = await res.json();
 
-    // The server accepted what we sent, so drop exactly those ops — anything
-    // ticked while the request was in flight stays queued.
+    // The server owns exactly what we sent; anything ticked mid-flight stays queued.
     if (flushing.length) {
       pending = pending.slice(flushing.length);
       lsSet(PENDING_KEY, pending);
@@ -552,17 +711,21 @@ async function sync(){
 
     items = mergeInto(Object.assign({}, server.items || {}), pending);
     lsSet(MIRROR_KEY, items);
-    applyToBoxes();
+    refreshBoxes();
     paint();
     statusIdle();
-  } catch (e) {
-    // Nothing is lost: the ops stay in the queue and localStorage still holds
-    // the mirror, so the next successful sync catches up.
+  } catch {
     status(pending.length ? pending.length + " queued" : "Offline", true);
   } finally {
     syncing = false;
     if (dirty) { dirty = false; sync(); }
   }
+}
+
+function refreshBoxes(){
+  host.querySelectorAll('input[type="checkbox"]').forEach(b => {
+    b.checked = !!(items[b.dataset.id] && items[b.dataset.id].c);
+  });
 }
 
 function scheduleSync(){
@@ -579,17 +742,34 @@ function record(id, checked){
 }
 
 /* ---------- events ---------- */
+
 document.addEventListener("change", e => {
   const b = e.target;
-  if (!b.matches('input[type="checkbox"]')) return;
+  if (!b.matches('input[type="checkbox"][data-id]')) return;
   record(b.dataset.id, b.checked);
   paint();
   status("Saving");
   scheduleSync();
 });
 
+document.getElementById("editBtn").addEventListener("click", e => {
+  editing = !editing;
+  editTarget = null;
+  document.body.classList.toggle("editing", editing);
+  e.currentTarget.setAttribute("aria-pressed", String(editing));
+  e.currentTarget.textContent = editing ? "Done editing" : "Edit list";
+  renderAll();
+});
+
+document.getElementById("addSectionBtn").addEventListener("click", () => {
+  const sec = { id: newId(), n: "", title: "New section", core: true, flag: false, note: "", items: [] };
+  list.sections.push(sec);
+  editTarget = { kind: "section", id: sec.id };
+  commitList();
+});
+
 document.getElementById("resetBtn").addEventListener("click", () => {
-  const ticked = boxes.filter(b => b.checked);
+  const ticked = host.querySelectorAll('input[type="checkbox"][data-id]:checked');
   if (!ticked.length) return;
   if (!confirm("Clear all " + ticked.length + " ticks on every device?")) return;
   ticked.forEach(b => { b.checked = false; record(b.dataset.id, false); });
@@ -597,18 +777,25 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   scheduleSync();
 });
 
-document.addEventListener("visibilitychange", () => { if (!document.hidden) sync(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  sync();
+  // Don't yank the list out from under an open form.
+  if (!editTarget) loadList().then(ok => { if (ok) renderAll(); });
+});
 window.addEventListener("online", sync);
 window.addEventListener("focus", sync);
 setInterval(() => { if (!document.hidden) sync(); }, POLL_MS);
 
 /* ---------- boot ---------- */
+
+list = lsGet(LIST_KEY, { rev: 0, sections: [] });
 items = lsGet(MIRROR_KEY, {});
 pending = lsGet(PENDING_KEY, []);
-applyToBoxes();
-paint();
+renderAll();
 statusIdle();
-sync();
+
+loadList().then(() => { renderAll(); sync(); });
 </script>
 </body>
 </html>

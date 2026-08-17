@@ -1,0 +1,1452 @@
+{
+  "rev": 0,
+  "sections": [
+    {
+      "id": "s-000",
+      "n": "000",
+      "title": "Before the Beginning",
+      "core": false,
+      "flag": false,
+      "note": "Secret Wars resolves this run as much as it resolves the Avengers one — same author, same era, and threads that walk straight into the finale. Around 65 issues, and widely held to be his best Marvel work.",
+      "items": [
+        {
+          "id": "000-dark-reign-fantastic-four-1-5",
+          "s": "Dark Reign: Fantastic Four",
+          "i": "#1–5",
+          "note": "Hickman's warm-up, written before his run proper",
+          "alt": false
+        },
+        {
+          "id": "000-fantastic-four-1998-570-588",
+          "s": "Fantastic Four",
+          "i": "(1998) #570–588",
+          "note": "The run starts here",
+          "alt": false
+        },
+        {
+          "id": "000-ff-1-11",
+          "s": "FF",
+          "i": "#1–11",
+          "note": "Same story, retitled",
+          "alt": false
+        },
+        {
+          "id": "000-fantastic-four-600-611-ff-12-23-alternating",
+          "s": "Fantastic Four #600–611 / FF #12–23",
+          "i": "alternating",
+          "note": "F4 600, FF 12, F4 601, FF 13, F4 602, FF 14, F4 603, FF 15, F4 604, FF 16, F4 605, 605.1, 606, FF 17–18, F4 607–608, FF 19–21, F4 609–610, FF 22, F4 611, FF 23",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-001",
+      "n": "001",
+      "title": "Incursions & Avengers World",
+      "core": true,
+      "flag": false,
+      "note": "Two titles running in parallel: Avengers goes big and outward, New Avengers stays with the Illuminati.",
+      "items": [
+        {
+          "id": "001-new-avengers-1",
+          "s": "New Avengers",
+          "i": "#1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-new-avengers-2",
+          "s": "New Avengers",
+          "i": "#2",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-new-avengers-3",
+          "s": "New Avengers",
+          "i": "#3",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-1",
+          "s": "Avengers",
+          "i": "#1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-2",
+          "s": "Avengers",
+          "i": "#2",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-3",
+          "s": "Avengers",
+          "i": "#3",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-4",
+          "s": "Avengers",
+          "i": "#4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-5",
+          "s": "Avengers",
+          "i": "#5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-new-avengers-4",
+          "s": "New Avengers",
+          "i": "#4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-new-avengers-5",
+          "s": "New Avengers",
+          "i": "#5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-new-avengers-6",
+          "s": "New Avengers",
+          "i": "#6",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-6",
+          "s": "Avengers",
+          "i": "#6",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-7",
+          "s": "Avengers",
+          "i": "#7",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-8",
+          "s": "Avengers",
+          "i": "#8",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-9",
+          "s": "Avengers",
+          "i": "#9",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-10",
+          "s": "Avengers",
+          "i": "#10",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-11",
+          "s": "Avengers",
+          "i": "#11",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-12",
+          "s": "Avengers",
+          "i": "#12",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-13",
+          "s": "Avengers",
+          "i": "#13",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-new-avengers-7",
+          "s": "New Avengers",
+          "i": "#7",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-14",
+          "s": "Avengers",
+          "i": "#14",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-15",
+          "s": "Avengers",
+          "i": "#15",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-16",
+          "s": "Avengers",
+          "i": "#16",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "001-avengers-17",
+          "s": "Avengers",
+          "i": "#17",
+          "note": "Leads straight into Infinity",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-002",
+      "n": "002",
+      "title": "Infinity",
+      "core": true,
+      "flag": false,
+      "note": "The six-issue event miniseries interleaves with both ongoings. This is the published reading order.",
+      "items": [
+        {
+          "id": "002-free-comic-book-day-2013-infinity-1",
+          "s": "Free Comic Book Day 2013",
+          "i": "Infinity #1",
+          "note": "Hickman prologue",
+          "alt": false
+        },
+        {
+          "id": "002-infinity-1",
+          "s": "Infinity",
+          "i": "#1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-new-avengers-8",
+          "s": "New Avengers",
+          "i": "#8",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-new-avengers-9",
+          "s": "New Avengers",
+          "i": "#9",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-avengers-18",
+          "s": "Avengers",
+          "i": "#18",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-infinity-2",
+          "s": "Infinity",
+          "i": "#2",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-new-avengers-10",
+          "s": "New Avengers",
+          "i": "#10",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-avengers-19",
+          "s": "Avengers",
+          "i": "#19",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-infinity-3",
+          "s": "Infinity",
+          "i": "#3",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-avengers-20",
+          "s": "Avengers",
+          "i": "#20",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-infinity-4",
+          "s": "Infinity",
+          "i": "#4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-avengers-21",
+          "s": "Avengers",
+          "i": "#21",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-new-avengers-11",
+          "s": "New Avengers",
+          "i": "#11",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-infinity-5",
+          "s": "Infinity",
+          "i": "#5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-avengers-22",
+          "s": "Avengers",
+          "i": "#22",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-avengers-23",
+          "s": "Avengers",
+          "i": "#23",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-infinity-6",
+          "s": "Infinity",
+          "i": "#6",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-new-avengers-12",
+          "s": "New Avengers",
+          "i": "#12",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "002-infinity-against-the-tide-infinite-comic-1-2",
+          "s": "Infinity: Against the Tide",
+          "i": "Infinite Comic #1–2",
+          "note": "Digital-first Silver Surfer side-story, set during the event",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-003",
+      "n": "003",
+      "title": "Post-Infinity & Original Sin",
+      "core": true,
+      "flag": false,
+      "note": "New Avengers #13 ships as #13.INH. Avengers #34.1 and #34.2 are numbered point-one issues, not misprints.",
+      "items": [
+        {
+          "id": "003-avengers-24",
+          "s": "Avengers",
+          "i": "#24",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-13",
+          "s": "New Avengers",
+          "i": "#13",
+          "note": "Shipped as #13.INH",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-14",
+          "s": "New Avengers",
+          "i": "#14",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-15",
+          "s": "New Avengers",
+          "i": "#15",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-25",
+          "s": "Avengers",
+          "i": "#25",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-26",
+          "s": "Avengers",
+          "i": "#26",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-27",
+          "s": "Avengers",
+          "i": "#27",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-28",
+          "s": "Avengers",
+          "i": "#28",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-16",
+          "s": "New Avengers",
+          "i": "#16",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-17",
+          "s": "New Avengers",
+          "i": "#17",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-18",
+          "s": "New Avengers",
+          "i": "#18",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-19",
+          "s": "New Avengers",
+          "i": "#19",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-20",
+          "s": "New Avengers",
+          "i": "#20",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-21",
+          "s": "New Avengers",
+          "i": "#21",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-22",
+          "s": "New Avengers",
+          "i": "#22",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-23",
+          "s": "New Avengers",
+          "i": "#23",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-new-avengers-annual-1",
+          "s": "New Avengers Annual",
+          "i": "#1",
+          "note": "Barbiere & Rudy, not Hickman — fills in Doctor Strange before Time Runs Out",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-0",
+          "s": "Original Sin",
+          "i": "#0",
+          "note": "Waid prologue",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-1",
+          "s": "Original Sin",
+          "i": "#1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-2",
+          "s": "Original Sin",
+          "i": "#2",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-3",
+          "s": "Original Sin",
+          "i": "#3",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-4",
+          "s": "Original Sin",
+          "i": "#4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-5",
+          "s": "Original Sin",
+          "i": "#5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-6",
+          "s": "Original Sin",
+          "i": "#6",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-7",
+          "s": "Original Sin",
+          "i": "#7",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-original-sin-8",
+          "s": "Original Sin",
+          "i": "#8",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-29",
+          "s": "Avengers",
+          "i": "#29",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-30",
+          "s": "Avengers",
+          "i": "#30",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-31",
+          "s": "Avengers",
+          "i": "#31",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-32",
+          "s": "Avengers",
+          "i": "#32",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-33",
+          "s": "Avengers",
+          "i": "#33",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-34",
+          "s": "Avengers",
+          "i": "#34",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-34-1",
+          "s": "Avengers",
+          "i": "#34.1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "003-avengers-34-2",
+          "s": "Avengers",
+          "i": "#34.2",
+          "note": "",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-004",
+      "n": "004",
+      "title": "Optional Reading",
+      "core": false,
+      "flag": false,
+      "note": "Side reading, not required by the main line. Issue numbers filled in so you can find them.",
+      "items": [
+        {
+          "id": "004-captain-america-2012-16-21",
+          "s": "Captain America (2012)",
+          "i": "#16–21",
+          "note": "Remender — The Iron Nail. Starts at #1 if you want the whole run.",
+          "alt": false
+        },
+        {
+          "id": "004-thor-god-of-thunder-1-25",
+          "s": "Thor: God of Thunder",
+          "i": "#1–25",
+          "note": "Aaron. Stops where the title becomes Thor (2014) — all you need is that Jane Foster is Thor.",
+          "alt": false
+        },
+        {
+          "id": "004-x-men-schism-1-5",
+          "s": "X-Men: Schism",
+          "i": "#1–5",
+          "note": "Cyclops vs. Wolverine.",
+          "alt": false
+        },
+        {
+          "id": "004-avengers-x-sanction-1-4",
+          "s": "Avengers: X-Sanction",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "004-avengers-vs-x-men-0-12",
+          "s": "Avengers vs. X-Men",
+          "i": "#0–12",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "004-superior-iron-man-1-9",
+          "s": "Superior Iron Man",
+          "i": "#1–9",
+          "note": "Tom Taylor. Spins out of AXIS, which is poorly regarded and skippable — all you need is that Tony came out of it inverted",
+          "alt": false
+        },
+        {
+          "id": "004-infinity-companion-12-series",
+          "s": "Infinity Companion",
+          "i": "12 series",
+          "note": "The event's tie-ins: Captain Marvel #15–16, Thunderbolts #14–18, Avengers Assemble #18–20, Infinity: The Hunt #1–4, Mighty Avengers #1–3, Nova #8–9, Superior Spider-Man Team-Up #3–4, Infinity: Heist #1–4, Fearless Defenders #10, Secret Avengers #10–11, Guardians of the Galaxy #8–9, Wolverine & the X-Men Annual #1",
+          "alt": false
+        },
+        {
+          "id": "004-ultimate-comics-doomsday-12-issues",
+          "s": "Ultimate Comics: Doomsday",
+          "i": "12 issues",
+          "note": "Ultimate Enemy #1–4, Ultimate Mystery #1–4, Ultimate Doom #1–4.",
+          "alt": false
+        },
+        {
+          "id": "004-ultimate-comics-the-ultimates-1-12",
+          "s": "Ultimate Comics: The Ultimates",
+          "i": "#1–12",
+          "note": "Hickman's Ultimate Universe run.",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-005",
+      "n": "005",
+      "title": "Time Runs Out",
+      "core": true,
+      "flag": false,
+      "note": "Strict alternation, Avengers then New Avengers, with one wobble near the end: New Avengers #31 and #32 run back to back, and Avengers #44 closes it out.",
+      "items": [
+        {
+          "id": "005-avengers-35",
+          "s": "Avengers",
+          "i": "#35",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-24",
+          "s": "New Avengers",
+          "i": "#24",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-36",
+          "s": "Avengers",
+          "i": "#36",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-25",
+          "s": "New Avengers",
+          "i": "#25",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-37",
+          "s": "Avengers",
+          "i": "#37",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-26",
+          "s": "New Avengers",
+          "i": "#26",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-38",
+          "s": "Avengers",
+          "i": "#38",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-27",
+          "s": "New Avengers",
+          "i": "#27",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-39",
+          "s": "Avengers",
+          "i": "#39",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-28",
+          "s": "New Avengers",
+          "i": "#28",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-40",
+          "s": "Avengers",
+          "i": "#40",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-29",
+          "s": "New Avengers",
+          "i": "#29",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-41",
+          "s": "Avengers",
+          "i": "#41",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-30",
+          "s": "New Avengers",
+          "i": "#30",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-42",
+          "s": "Avengers",
+          "i": "#42",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-31",
+          "s": "New Avengers",
+          "i": "#31",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-new-avengers-32",
+          "s": "New Avengers",
+          "i": "#32",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-43",
+          "s": "Avengers",
+          "i": "#43",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "005-new-avengers-33",
+          "s": "New Avengers",
+          "i": "#33",
+          "note": "",
+          "alt": true
+        },
+        {
+          "id": "005-avengers-44",
+          "s": "Avengers",
+          "i": "#44",
+          "note": "",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-006",
+      "n": "006",
+      "title": "Secret Wars",
+      "core": true,
+      "flag": true,
+      "note": "Not on your list — added because it's where the road ends. Skip the section if you only wanted the run-up.",
+      "items": [
+        {
+          "id": "006-secret-wars-0",
+          "s": "Secret Wars",
+          "i": "#0",
+          "note": "Free Comic Book Day 2015 prologue",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-1",
+          "s": "Secret Wars",
+          "i": "#1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-2",
+          "s": "Secret Wars",
+          "i": "#2",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-3",
+          "s": "Secret Wars",
+          "i": "#3",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-4",
+          "s": "Secret Wars",
+          "i": "#4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-5",
+          "s": "Secret Wars",
+          "i": "#5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-6",
+          "s": "Secret Wars",
+          "i": "#6",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-7",
+          "s": "Secret Wars",
+          "i": "#7",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-8",
+          "s": "Secret Wars",
+          "i": "#8",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "006-secret-wars-9",
+          "s": "Secret Wars",
+          "i": "#9",
+          "note": "",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-007",
+      "n": "007",
+      "title": "Secret Wars: The Tie-Ins",
+      "core": false,
+      "flag": false,
+      "note": "The tie-ins worth the time, in recommended order — the weakest and least connected have been dropped. None are required. Last Days sit before and around #1; the rest fill the gap between #2 and #7; four issues are held back as epilogues.",
+      "items": [
+        {
+          "id": "007-captain-america-and-the-mighty-avengers-8",
+          "s": "Captain America and the Mighty Avengers",
+          "i": "#8",
+          "note": "Last Days. Read before Secret Wars #0 — it recaps where things stand",
+          "alt": false
+        },
+        {
+          "id": "007-loki-agent-of-asgard-14-15",
+          "s": "Loki: Agent of Asgard",
+          "i": "#14–15",
+          "note": "Last Days",
+          "alt": false
+        },
+        {
+          "id": "007-captain-america-and-the-mighty-avengers-9",
+          "s": "Captain America and the Mighty Avengers",
+          "i": "#9",
+          "note": "Last Days",
+          "alt": false
+        },
+        {
+          "id": "007-ms-marvel-16-19",
+          "s": "Ms. Marvel",
+          "i": "#16–19",
+          "note": "Last Days",
+          "alt": false
+        },
+        {
+          "id": "007-magneto-18-21",
+          "s": "Magneto",
+          "i": "#18–21",
+          "note": "Last Days",
+          "alt": false
+        },
+        {
+          "id": "007-silk-7",
+          "s": "Silk",
+          "i": "#7",
+          "note": "Last Days",
+          "alt": false
+        },
+        {
+          "id": "007-silver-surfer-13-14",
+          "s": "Silver Surfer",
+          "i": "#13–14",
+          "note": "Last Days. Hold #15 as an epilogue",
+          "alt": false
+        },
+        {
+          "id": "007-loki-agent-of-asgard-16-17",
+          "s": "Loki: Agent of Asgard",
+          "i": "#16–17",
+          "note": "Last Days, concludes the run",
+          "alt": false
+        },
+        {
+          "id": "007-secret-wars-battleworld-1-4",
+          "s": "Secret Wars: Battleworld",
+          "i": "#1–4",
+          "note": "After Secret Wars #2. Anthology of short domain stories",
+          "alt": false
+        },
+        {
+          "id": "007-secret-wars-journal-1-5",
+          "s": "Secret Wars Journal",
+          "i": "#1–5",
+          "note": "Anthology. Sets up Siege",
+          "alt": false
+        },
+        {
+          "id": "007-master-of-kung-fu-1-4",
+          "s": "Master of Kung Fu",
+          "i": "#1–4",
+          "note": "After Secret Wars #3 — and everything down to Civil War below sits in this same gap",
+          "alt": false
+        },
+        {
+          "id": "007-a-force-1-4",
+          "s": "A-Force",
+          "i": "#1–4",
+          "note": "Hold #5 as an epilogue",
+          "alt": false
+        },
+        {
+          "id": "007-planet-hulk-1-5",
+          "s": "Planet Hulk",
+          "i": "#1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-spider-verse-1-5",
+          "s": "Spider-Verse",
+          "i": "#1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-m-o-d-o-k-assassin-1-5",
+          "s": "M.O.D.O.K.: Assassin",
+          "i": "#1–5",
+          "note": "Fits entirely before Secret Wars #4",
+          "alt": false
+        },
+        {
+          "id": "007-old-man-logan-1-4",
+          "s": "Old Man Logan",
+          "i": "#1–4",
+          "note": "Hold #5 as an epilogue",
+          "alt": false
+        },
+        {
+          "id": "007-infinity-gauntlet-1-5",
+          "s": "Infinity Gauntlet",
+          "i": "#1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-x-men-92-1-4",
+          "s": "X-Men ’92",
+          "i": "#1–4",
+          "note": "Originally a digital Infinite Comic",
+          "alt": false
+        },
+        {
+          "id": "007-years-of-future-past-1-5",
+          "s": "Years of Future Past",
+          "i": "#1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-giant-size-little-marvel-avx-1-4",
+          "s": "Giant-Size Little Marvel: AvX",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-amazing-spider-man-renew-your-vows-1-5",
+          "s": "Amazing Spider-Man: Renew Your Vows",
+          "i": "#1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-armor-wars-1-2-1-5",
+          "s": "Armor Wars",
+          "i": "#1/2, #1–5",
+          "note": "The half issue was a Toys R Us exclusive",
+          "alt": false
+        },
+        {
+          "id": "007-marvel-zombies-1-4",
+          "s": "Marvel Zombies",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-weirdworld-1-4",
+          "s": "Weirdworld",
+          "i": "#1–4",
+          "note": "Hold #5 as an epilogue",
+          "alt": false
+        },
+        {
+          "id": "007-captain-marvel-and-the-carol-corps-1-4",
+          "s": "Captain Marvel and the Carol Corps",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-1872-1-4",
+          "s": "1872",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-runaways-1-4",
+          "s": "Runaways",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-squadron-sinister-1-4",
+          "s": "Squadron Sinister",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-age-of-ultron-vs-marvel-zombies-1-4",
+          "s": "Age of Ultron vs. Marvel Zombies",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-e-is-for-extinction-1-4",
+          "s": "E Is for Extinction",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-korvac-saga-1-4",
+          "s": "Korvac Saga",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-guardians-of-knowhere-1-4",
+          "s": "Guardians of Knowhere",
+          "i": "#1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-civil-war-2015-1-5",
+          "s": "Civil War",
+          "i": "(2015) #1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-star-lord-and-kitty-pryde-1-3",
+          "s": "Star-Lord and Kitty Pryde",
+          "i": "#1–3",
+          "note": "After Secret Wars #4 — and so is everything down to Hank Johnson below",
+          "alt": false
+        },
+        {
+          "id": "007-red-skull-1-3",
+          "s": "Red Skull",
+          "i": "#1–3",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-spider-island-1-5",
+          "s": "Spider-Island",
+          "i": "#1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-inhumans-attilan-rising-1-5",
+          "s": "Inhumans: Attilan Rising",
+          "i": "#1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-captain-britain-and-the-mighty-defenders-1-2",
+          "s": "Captain Britain and the Mighty Defenders",
+          "i": "#1–2",
+          "note": "Ewing & Davis",
+          "alt": false
+        },
+        {
+          "id": "007-age-of-apocalypse-2015-1-5",
+          "s": "Age of Apocalypse",
+          "i": "(2015) #1–5",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-hail-hydra-1-4",
+          "s": "Hail Hydra",
+          "i": "#1–4",
+          "note": "Remender, carries threads from his Captain America",
+          "alt": false
+        },
+        {
+          "id": "007-house-of-m-2015-1-4",
+          "s": "House of M",
+          "i": "(2015) #1–4",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-siege-1-4",
+          "s": "Siege",
+          "i": "#1–4",
+          "note": "After Secret Wars #6. The closest tie-in to the main story",
+          "alt": false
+        },
+        {
+          "id": "007-secret-wars-agents-of-atlas-1",
+          "s": "Secret Wars: Agents of Atlas",
+          "i": "#1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "007-thors-1-4",
+          "s": "Thors",
+          "i": "#1–4",
+          "note": "Aaron. Battleworld police procedural",
+          "alt": false
+        },
+        {
+          "id": "007-a-force-5",
+          "s": "A-Force",
+          "i": "#5",
+          "note": "Epilogue",
+          "alt": false
+        },
+        {
+          "id": "007-old-man-logan-5",
+          "s": "Old Man Logan",
+          "i": "#5",
+          "note": "Epilogue",
+          "alt": false
+        },
+        {
+          "id": "007-weirdworld-5",
+          "s": "Weirdworld",
+          "i": "#5",
+          "note": "Epilogue",
+          "alt": false
+        },
+        {
+          "id": "007-silver-surfer-15",
+          "s": "Silver Surfer",
+          "i": "#15",
+          "note": "Epilogue",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-008",
+      "n": "008",
+      "title": "After the Collapse",
+      "core": true,
+      "flag": false,
+      "note": "All-New, All-Different Marvel, 2015–16. These are the books that pick up the loose threads rather than the whole relaunch.",
+      "items": [
+        {
+          "id": "008-avengers-2015-0",
+          "s": "Avengers",
+          "i": "(2015) #0",
+          "note": "Anthology prologue to the new status quo",
+          "alt": false
+        },
+        {
+          "id": "008-all-new-all-different-avengers-1-15-annual-1",
+          "s": "All-New, All-Different Avengers",
+          "i": "#1–15, Annual #1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "008-new-avengers-2015-1-18",
+          "s": "New Avengers",
+          "i": "(2015) #1–18",
+          "note": "Ewing. Same title, new team, new premise",
+          "alt": false
+        },
+        {
+          "id": "008-ultimates-2015-1-12",
+          "s": "Ultimates",
+          "i": "(2015) #1–12",
+          "note": "Ewing picks up the cosmology Hickman left behind",
+          "alt": false
+        },
+        {
+          "id": "008-ultimates-2-1-9-100",
+          "s": "Ultimates 2",
+          "i": "#1–9, #100",
+          "note": "Direct continuation",
+          "alt": false
+        },
+        {
+          "id": "008-u-s-avengers-the-run",
+          "s": "U.S.Avengers",
+          "i": "the run",
+          "note": "Ewing's follow-on to his New Avengers",
+          "alt": false
+        },
+        {
+          "id": "008-contest-of-champions-2015-1-10",
+          "s": "Contest of Champions",
+          "i": "(2015) #1–10",
+          "note": "Ewing. Set on the Battlerealm — what's left of Battleworld",
+          "alt": false
+        },
+        {
+          "id": "008-squadron-supreme-2015-the-run",
+          "s": "Squadron Supreme",
+          "i": "(2015) the run",
+          "note": "Survivors of universes that didn't make it back",
+          "alt": false
+        },
+        {
+          "id": "008-infamous-iron-man-1-12",
+          "s": "Infamous Iron Man",
+          "i": "#1–12",
+          "note": "Bendis & Maleev — where Doom goes next",
+          "alt": false
+        },
+        {
+          "id": "008-doctor-doom-2019-the-run",
+          "s": "Doctor Doom",
+          "i": "(2019) the run",
+          "note": "Cantwell. The Doom thread between Infamous Iron Man and One World Under Doom",
+          "alt": false
+        },
+        {
+          "id": "008-marvel-two-in-one-1-12",
+          "s": "Marvel Two-in-One",
+          "i": "#1–12",
+          "note": "Zdarsky. Ben and Johnny looking for the rest of the family",
+          "alt": false
+        },
+        {
+          "id": "008-fantastic-four-2018-1-onward",
+          "s": "Fantastic Four",
+          "i": "(2018) #1 onward",
+          "note": "Slott. Pays off what Two-in-One is searching for",
+          "alt": false
+        },
+        {
+          "id": "008-defenders-2021-1-5",
+          "s": "Defenders",
+          "i": "(2021) #1–5",
+          "note": "Ewing. The cosmos that came before this one",
+          "alt": false
+        },
+        {
+          "id": "008-defenders-beyond-2022-1-5",
+          "s": "Defenders: Beyond",
+          "i": "(2022) #1–5",
+          "note": "Closes the loop on the Ultimates cosmology",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-009",
+      "n": "009",
+      "title": "The Maker's Second Universe",
+      "core": true,
+      "flag": false,
+      "note": "The most direct continuation of all — the Ultimate thread, restarted by Hickman eight years later.",
+      "items": [
+        {
+          "id": "009-ultimate-invasion-1-4",
+          "s": "Ultimate Invasion",
+          "i": "#1–4",
+          "note": "Hickman & Hitch. The Illuminati reassemble",
+          "alt": false
+        },
+        {
+          "id": "009-ultimate-universe-1",
+          "s": "Ultimate Universe",
+          "i": "#1",
+          "note": "One-shot bridge into the new line",
+          "alt": false
+        },
+        {
+          "id": "009-ultimate-spider-man-2024-1-24",
+          "s": "Ultimate Spider-Man",
+          "i": "(2024) #1–24",
+          "note": "Hickman",
+          "alt": false
+        },
+        {
+          "id": "009-ultimates-2024-1-24",
+          "s": "Ultimates",
+          "i": "(2024) #1–24",
+          "note": "Deniz Camp",
+          "alt": false
+        },
+        {
+          "id": "009-ultimate-universe-one-year-in-1",
+          "s": "Ultimate Universe: One Year In",
+          "i": "#1",
+          "note": "Read after the first year of the line",
+          "alt": false
+        },
+        {
+          "id": "009-ultimate-universe-two-years-in-1",
+          "s": "Ultimate Universe: Two Years In",
+          "i": "#1",
+          "note": "",
+          "alt": false
+        },
+        {
+          "id": "009-ultimate-spider-man-incursion-the-mini",
+          "s": "Ultimate Spider-Man: Incursion",
+          "i": "the mini",
+          "note": "Miles crosses back to 616",
+          "alt": false
+        },
+        {
+          "id": "009-ultimate-universe-finale-2026-1",
+          "s": "Ultimate Universe: Finale",
+          "i": "(2026) #1",
+          "note": "The line closes out",
+          "alt": false
+        }
+      ]
+    },
+    {
+      "id": "s-010",
+      "n": "010",
+      "title": "Where It Stands",
+      "core": true,
+      "flag": false,
+      "note": "Current as of mid-2026, so this end of the list is still moving.",
+      "items": [
+        {
+          "id": "010-one-world-under-doom-1-9",
+          "s": "One World Under Doom",
+          "i": "#1–9",
+          "note": "Ryan North. Doom on the throne again, ten years on",
+          "alt": false
+        }
+      ]
+    }
+  ]
+}

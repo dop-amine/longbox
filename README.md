@@ -17,13 +17,28 @@ plus a `public/` directory.
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/api/state` | GET | current state: `{rev, updated, items: {<id>: {c, t}}}` |
-| `/api/state` | PATCH | apply ops: `{ops: [{id, c, t}]}`, returns new state |
+| `/api/state` | GET | ticks: `{rev, updated, items: {<id>: {c, t}}}` |
+| `/api/state` | PATCH | apply tick ops: `{ops: [{id, c, t}]}`, returns new state |
+| `/api/list` | GET | the reading order: `{rev, updated, sections: [...]}` |
+| `/api/list` | PUT | replace the reading order, guarded by `rev` |
 | `/healthz` | GET | liveness, used by the container healthcheck |
 
-State is a single JSON document at `$DATA_DIR/state.json`, written to a temp
-file and `rename`d into place, so an unclean shutdown leaves either the old
-state or the new one — never half of either.
+Two JSON documents live in `$DATA_DIR`, and the split is the central idea:
+
+- **`list.json`** — the reading order itself. Edited rarely and deliberately.
+- **`state.json`** — which issues are ticked. Edited constantly, from anywhere.
+
+Both are written to a temp file and `rename`d into place, so an unclean
+shutdown leaves either the old document or the new one — never half of either.
+
+They have different concurrency models because they have different failure
+modes. Ticks merge per item, so two devices can never revert each other. List
+edits are whole-document writes guarded by a revision number: if the server has
+moved on, the write is refused with a `409` carrying the current document, and
+the page reloads rather than clobbering a change made elsewhere.
+
+`list.json` is seeded from `seed/list.json` (shipped in the image) the first
+time the service starts against an empty data directory.
 
 ### Why ops instead of saving the whole checklist
 
@@ -44,12 +59,37 @@ made underground lands the next time the page sees the network. The last known
 state is mirrored locally too, so the page paints instantly instead of waiting
 on a round trip, and still shows progress when the server is unreachable.
 
-### Item ids come from the text
+### Item ids are frozen
 
-An id is `slug(section + series + issue)` — e.g. `002-infinity-1`. **Editing an
-existing entry's series or issue text changes its id and orphans its tick.**
-Adding entries is free; renaming an existing one is not. If a rename is
-unavoidable, either re-tick by hand or rewrite the id inside `state.json`.
+Ticks are keyed by item id, so an id must never change. Originally they were
+derived from the entry's text (`slug(section + series + issue)`), which was
+fine while the list was hardcoded and fatal as soon as it became editable —
+renaming an issue would have silently orphaned its tick.
+
+So `seed/list.json` pins the ids that scheme produced, and nothing recomputes
+them again. New entries get a random id (`x-` plus 8 random bytes). An id,
+once assigned, outlives every edit to the row: rename an entry freely, its
+tick follows.
+
+Deleting an entry deletes its tick with it. That is deliberate — a tick left
+behind for a row that no longer exists would come back to life if the same id
+were ever reused.
+
+## Editing the list
+
+*Edit list* in the bottom bar turns on edit mode. From there you can:
+
+- add, rename or delete an entry (series, issue, note, alternate tint)
+- add, retitle or delete a section, and set whether it counts toward the main
+  line or carries a flagged note
+- reorder entries within a section, and reorder sections
+
+Changes save immediately. Ticking still works while editing.
+
+Unlike ticks, list edits are **not** queued when offline: replaying a
+whole-document write later is exactly the stale overwrite the revision guard
+exists to prevent. If a save fails, the page reloads from the server and says
+so rather than pretending it worked.
 
 ## Running it
 
@@ -76,15 +116,23 @@ progress.
 ## Development
 
 ```bash
-node test/sync.test.mjs      # 10 assertions, no framework, no dependencies
+node test/sync.test.mjs      # 10 assertions — ticks and merge rules
+node test/list.test.mjs      # 14 assertions — editing, validation, concurrency
 node --check server.mjs
 python3 scripts/make-icon.py # regenerate the iOS home-screen icon (stdlib only)
 ```
 
-The tests spawn the real server against a temp directory and cover the merge
-rules the multi-device story rests on: stale ops losing to newer ones, future
-timestamps being clamped, malformed ops being ignored rather than fatal, and
-state surviving a restart.
+No framework and no dependencies: both suites spawn the real server against a
+temp directory and talk to it over HTTP.
+
+`sync.test.mjs` covers the merge rules the multi-device story rests on — stale
+ops losing to newer ones, future timestamps clamped, malformed ops ignored
+rather than fatal, state surviving a restart.
+
+`list.test.mjs` covers editing: seeding from the shipped seed, revision
+conflicts refusing a stale write, validation (duplicate ids, missing series,
+over-long fields), orphan ticks purged on delete, and the invariant the whole
+id-freezing design exists to protect — **renaming an entry keeps its tick**.
 
 CI runs those on every push and publishes a container image on merge to `main`.
 
