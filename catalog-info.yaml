@@ -1,0 +1,22 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: longbox
+  title: Longbox
+  description: >-
+    A self-hosted checklist for comic reading orders, at longbox.dop-amine.com
+    — several lists, tickable on any device and editable from the page, with
+    progress on the server rather than in one browser. One Node process with
+    zero npm dependencies.
+  annotations:
+    github.com/project-slug: dop-amine/longbox
+    dop-amine.com/hub-stack: longbox
+    dop-amine.com/tier: '3'
+  links:
+    - url: https://longbox.dop-amine.com
+      title: Longbox
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: production
+  owner: dop-amine
