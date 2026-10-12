@@ -32,6 +32,7 @@
 // reach it can rewrite every list.
 
 import { createServer } from "node:http";
+import { readFileSync } from "node:fs";
 import { readFile, writeFile, rename, mkdir, readdir, unlink } from "node:fs/promises";
 import { join, extname, normalize, basename } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,7 +40,50 @@ import { randomUUID } from "node:crypto";
 
 const PORT = Number(process.env.PORT || 8080);
 const DATA_DIR = process.env.DATA_DIR || "/data";
+
+/*
+ * Jarvis's orb (optional): a Jarvis site's assistant, as a small live brain in
+ * the corner — its loader script and a <jarvis-orb> element, added to the page
+ * only when JARVIS_ORB_ORIGIN names that site (dop-amine/jarvis
+ * docs/architecture/orb.md). Unset, the page and its CSP are exactly as before.
+ * An https origin and nothing after the host — a plain hostname, so the value
+ * can neither add a CSP directive nor break out of an HTML attribute; anything
+ * else stops the server at start rather than shipping a half-configured page.
+ * The loader runs with this page's authority (Jarvis is the owner's own, first
+ * party); the frame it mounts learns only this page's origin, and nothing
+ * about the lists crosses.
+ */
+function httpsOrigin(value) {
+  if (!value) return null;
+  let u;
+  try {
+    u = new URL(value);
+  } catch {
+    u = null;
+  }
+  if (!u || u.protocol !== "https:" || value.replace(/\/$/, "") !== u.origin || !/^[a-z0-9.-]+(:\d+)?$/.test(u.host)) {
+    console.error("refusing to start: JARVIS_ORB_ORIGIN must be an https origin with nothing after the host");
+    process.exit(1);
+  }
+  return u.origin;
+}
+const ORB_ORIGIN = httpsOrigin(process.env.JARVIS_ORB_ORIGIN);
 const PUBLIC_DIR = fileURLToPath(new URL("./public/", import.meta.url));
+
+/*
+ * The page with the orb, built once at start: the markup goes before the last
+ * </body>. A page with none would silently lose the orb while the CSP still
+ * names Jarvis — so that stops the server too.
+ */
+const ORB_PAGE = ORB_ORIGIN ? orbPage(readFileSync(join(PUBLIC_DIR, "index.html"), "utf8"), ORB_ORIGIN) : null;
+function orbPage(html, origin) {
+  const at = html.lastIndexOf("</body>");
+  if (at === -1) {
+    console.error("refusing to start: public/index.html has no </body> for the orb");
+    process.exit(1);
+  }
+  return Buffer.from(html.slice(0, at) + orbMarkup(origin) + html.slice(at));
+}
 const SEED_DIR = fileURLToPath(new URL("./seed/", import.meta.url));
 const ORDERS_DIR = join(DATA_DIR, "orders");
 const STATE_FILE = join(DATA_DIR, "state.json");
@@ -636,7 +680,7 @@ async function serveStatic(res, urlPath) {
   let buf = staticCache.get(full);
   if (!buf) {
     try {
-      buf = await readFile(full);
+      buf = ORB_PAGE && rel === "index.html" ? ORB_PAGE : await readFile(full);
       staticCache.set(full, buf);
     } catch {
       return send(res, 404, "not found", { "content-type": MIME[".txt"] });
@@ -646,15 +690,43 @@ async function serveStatic(res, urlPath) {
   // newer API.
   send(res, 200, buf, {
     "content-type": MIME[extname(full)] || "application/octet-stream",
-    "content-security-policy":
-      "default-src 'self'; " +
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "font-src 'self' https://fonts.gstatic.com; " +
-      "script-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data:; " +
-      "connect-src 'self'; " +
-      "base-uri 'none'; frame-ancestors 'none'",
+    "content-security-policy": pageCsp(ORB_ORIGIN),
   });
+}
+
+/*
+ * What the orb adds to the page: the loader (a classic script — a module is
+ * fetched in CORS mode — and async, so it never holds the page), the element,
+ * and a lift that keeps it above the dock, which is fixed to the bottom and
+ * wraps to a different height at every width (orb.md: --jarvis-orb-lift).
+ * The page's bottom padding follows the dock too — its height plus 80px (the
+ * 8px gap, the 56px orb, 16px of air) — so the last row always scrolls clear.
+ */
+function orbMarkup(origin) {
+  return (
+    `<script src="${origin}/embed/jarvis.js" async></script>\n` +
+    `<jarvis-orb position="bottom-right" size="sm" mode="auto"></jarvis-orb>\n` +
+    "<script>(function(){var d=document.querySelector('.dock'),o=document.querySelector('jarvis-orb');" +
+    "if(!d||!o||!window.ResizeObserver)return;new ResizeObserver(function(){" +
+    "o.style.setProperty('--jarvis-orb-lift','calc('+d.offsetHeight+'px + 8px - max(1rem, env(safe-area-inset-bottom)))');" +
+    "document.body.style.paddingBottom=(d.offsetHeight+80)+'px';" +
+    "}).observe(d);})();</script>\n"
+  );
+}
+
+/** The page's CSP: the orb's origin is allowed to load its script and be framed, and nothing else changes. */
+function pageCsp(origin) {
+  const jarvis = origin ? ` ${origin}` : "";
+  return (
+    "default-src 'self'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    `script-src 'self' 'unsafe-inline'${jarvis}; ` +
+    (origin ? `frame-src ${origin}; ` : "") +
+    "img-src 'self' data:; " +
+    "connect-src 'self'; " +
+    "base-uri 'none'; frame-ancestors 'none'"
+  );
 }
 
 /* ---------- routes ---------- */
