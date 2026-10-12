@@ -12,6 +12,10 @@ metadata:
     github.com/project-slug: dop-amine/longbox
     dop-amine.com/hub-stack: longbox
     dop-amine.com/tier: '3'
+    # Jarvis's orb on longbox.dop-amine.com (jarvis B10): admits this host to
+    # Jarvis's /embed frame-ancestors. The page shows it only when the server
+    # has JARVIS_ORB_ORIGIN.
+    dop-amine.com/orb: "true"
   links:
     - url: https://longbox.dop-amine.com
       title: Longbox
