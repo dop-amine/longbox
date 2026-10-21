@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Rebuild the image without a commit, e.g. to pick up a patched node:22-alpine
+  # after a Node.js security release (2026-10-21 was the first time it was needed).
+  workflow_dispatch: {}
 
 permissions:
   contents: read
