@@ -21,9 +21,8 @@ jobs:
         with:
           node-version: 22
       - run: node --check server.mjs
-      - run: node test/page.test.mjs
-      - run: node test/sync.test.mjs
-      - run: node test/orders.test.mjs
+      # Every suite, not a list: a new test file gates the deploy by being there.
+      - run: for f in test/*.test.mjs; do node "$f" || exit 1; done
 
   image:
     # The deployment target auto-pulls :latest, so merging to main deploys.

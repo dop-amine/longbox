@@ -231,6 +231,15 @@ whatever reverse proxy already fronts your other services. Don't expose it to
 the internet without adding a gate — anyone who can reach it can rewrite every
 list.
 
+**Jarvis's orb (optional).** Set `JARVIS_ORB_ORIGIN` to the https origin of a
+[Jarvis](https://github.com/dop-amine/jarvis) site and the page gets its
+assistant orb in the bottom-right corner, kept above the dock, and the CSP
+allows that one origin to load its script and be framed. Nothing after the
+host; any other value stops the server at start. The loader runs with the
+page's authority, so name only a site you trust as much as this one. The site
+must also admit this host to its frame (for Jarvis, the `dop-amine.com/orb`
+catalog annotation). Unset, the page and its CSP are unchanged.
+
 ## Development
 
 ```bash
@@ -238,6 +247,7 @@ node test/page.test.mjs      #  6 assertions — script/markup agreement
 node test/sync.test.mjs      # 10 assertions — ticks and merge rules
 node test/orders.test.mjs    # 35 assertions — library, editing, import, history,
                              #                 backup/restore, migration
+node test/orb.test.mjs       #  4 tests — the optional Jarvis orb and its CSP
 node --check server.mjs
 python3 scripts/make-icon.py # regenerate the iOS home-screen icon (stdlib only)
 ```
@@ -251,7 +261,7 @@ page: it checks that every id the script looks up is defined in the markup,
 that no user text reaches `innerHTML`, and that no single reading order is
 hardcoded into the page any more.
 
-CI runs all three, then **builds the image, starts it, and requires it to
+CI runs every `test/*.test.mjs`, then **builds the image, starts it, and requires it to
 answer `/healthz` with a seeded library and serve the page** before publishing.
 That gate exists because the unit tests all pass against the source tree, so
 they cannot see a file the Dockerfile forgot to copy — which shipped once as a
